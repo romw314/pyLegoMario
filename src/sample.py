@@ -29,11 +29,6 @@ def my_tile_hook(t):
     """
     Test Function which will be called as soon as a tile is detected by Mario.
     t will contain the ID of the tile that was deteced.
-
-    START = 0
-    GOAL = 1
-    RED = 2
-    GREEN = 3
     """
     print(t)
 

@@ -35,10 +35,8 @@ SUBSCRIBE_IMU_COMMAND = bytearray([0x0A, 0x00, 0x41, 0x00, 0x00, 0x05, 0x00, 0x0
 SUBSCRIBE_RGB_COMMAND = bytearray([0x0A, 0x00, 0x41, 0x01, 0x00, 0x05, 0x00, 0x00, 0x00, 0x01])
 
 # TILE IDS
-TILE_START = 0
-TILE_GOAL = 1
-TILE_RED = 2
-TILE_GREEN = 3
+HEX_TO_COLOR_TILE = {0x13: "White", 0x15:"Red", 0x17:"Blue", 0x18:"Yellow", 0x1a:"Black", 0x25:"Green", 0x6a:"Brown", 0x0c:"Purple", 0x38:"Nougat Brown", 0x42:"Cyan"}
+HEX_TO_RGB_TILE = {0xb8: "Start", 0xb7: "Flag", 0x99: "BJR", 0x29: "?-Block", 0x2e: "Cloud", 0x14: "Don't Know", 0x02: "Goomba"}
 
 class Mario:
 
@@ -70,28 +68,21 @@ class Mario:
             func(x, y, z)
 
     def _handle_events(self, sender, data):
-        # Camera sensor data
+        print(data.hex())
+
+        if data[5] == data[6] == 0xff:
+            self._log("No Color or Barcode detected")
+            return
+
+        # Camera Sensor Data
         if data[0] == 8:
             # RGB code
             if data[5] == 0x0:
-                if data[4] == 0xb8:
-                    self._log("Start tile")
-                    self._callTileHooks(TILE_START)
-                if data[4] == 0xb7:
-                    self._log("Goal tile")
-                    self._callTileHooks(TILE_GOAL)
-                self._log("Barcode: " + " ".join(hex(n) for n in data))
-            # Red tile
-            elif data[6] == 0x15:
-                self._log("Red tile")
-                self._callTileHooks(TILE_RED)
-            # Green tile
-            elif data[6] == 0x25:
-                self._log("Green tile")
-                self._callTileHooks(TILE_GREEN)
-            # Unknow tile
-            else:
-                self._log("Unknown tile %s" % hex(data[6]))
+                self._log("%s Tile, Hex: %s" % (HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"), data.hex()))
+                self._callTileHooks(HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"))
+            elif data[5] == 0xff:
+                self._log("%s Ground, Hex: %s" % (HEX_TO_COLOR_TILE.get(data[6], "Unkown Color"), data.hex()))
+                self._callTileHooks(HEX_TO_COLOR_TILE.get(data[6], "Unkown Color"))
 
         # Accelerometer data
         elif data[0] == 7:
@@ -107,20 +98,21 @@ class Mario:
             self._log("Searching for Mario...")
             devices = await BleakScanner.discover()
             for d in devices:
-                if d.name.lower().startswith("lego mario"):
-                    try:
-                        async with BleakClient(d.address) as client:
-                            await client.is_connected()
-                            self._log("Mario Connected")
-                            await client.start_notify(LEGO_CHARACTERISTIC_UUID, self._handle_events)
-                            await asyncio.sleep(0.1)
-                            await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND)
-                            await asyncio.sleep(0.1)
-                            await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_RGB_COMMAND)
-                            while await client.is_connected() and self._run:
-                                await asyncio.sleep(0.05)
-                    except:
-                        pass
+                if d.name:
+                    if d.name.lower().startswith("lego mario"):
+                        try:
+                            async with BleakClient(d.address) as client:
+                                await client.is_connected()
+                                self._log("Mario Connected")
+                                await client.start_notify(LEGO_CHARACTERISTIC_UUID, self._handle_events)
+                                await asyncio.sleep(0.1)
+                                await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND)
+                                await asyncio.sleep(0.1)
+                                await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_RGB_COMMAND)
+                                while await client.is_connected() and self._run:
+                                    await asyncio.sleep(0.05)
+                        except:
+                            pass
 
     def Stop(self):
         self._run = False
