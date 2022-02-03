@@ -70,7 +70,7 @@ SUBSCRIBE_IMU_COMMAND =  bytearray([0x0A, # Length of message
                                     0x41, # message type (41=Port Input Format Setup)
                                     0x00, # port ID (0=accelerometer)
                                     0x00, # mode (0=RAW)
-                                    0x02, # delta interval
+                                    0x04, # delta interval
                                     0x00, # delta interval
                                     0x00, # delta interval
                                     0x00, # delta interval
