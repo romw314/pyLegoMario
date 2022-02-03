@@ -52,8 +52,15 @@ class Mario:
         return char - 256 if char > 127 else char
 
     def _log(self, msg, end="\n"):
+        """Log any message to stdout. Will also include mario's address.
+
+        Args:
+            msg (object): Any printable object.
+            end (str, optional): Same as end in print(). Defaults to "\n".
+        """
         if self._doLog:
-            print(("\r%s: %s" % ("Not Connected" if not self._client else self._client.address, msg)).ljust(70), end=end)
+            address = "Not Connected" if not self._client else self._client.address
+            print(("\r%s: %s" % (address, msg)).ljust(70), end=end)
 
     def AddTileHook(self, func):
         self._tileEventHooks.append(func)
@@ -107,10 +114,10 @@ class Mario:
     async def connect(self):
         self._run = True
         while self._run:
-            self._log("Searching for Mario...")
+            self._log("Searching for device...")
             devices = await BleakScanner.discover()
             for d in devices:
-                if d.name and d.name.lower().startswith("lego mario"):
+                if d.name and (d.name.lower().startswith("lego luigi") or d.name.lower().startswith("lego mario")):
                     try:
                         client = BleakClient(d.address)
                         await client.connect()
