@@ -1,7 +1,7 @@
 import ev3_dc as ev3
 from thread_task import Sleep
 import asyncio
-from pyLegoMario.src.mario import Mario, create_and_connect_mario
+from mario import Mario, create_and_connect_mario
 
 EV3_SETTINGS = {"protocol":ev3.BLUETOOTH, "host":"00:16:53:81:D7:E2"}
 with ev3.EV3(**EV3_SETTINGS) as brick:
@@ -15,7 +15,6 @@ with ev3.EV3(**EV3_SETTINGS) as brick:
             """
             global speed 
             global turn
-            print("\r%s".ljust(30) % t)
             if t == "Goomba":
                 speed += 10
                 car.move(speed, turn)
@@ -33,7 +32,6 @@ with ev3.EV3(**EV3_SETTINGS) as brick:
             """
             Test Function which will be called for every change in x, y or z accelerometer value.
             """
-            print("\rX: %i Y: %i Z: %i".ljust(30) % (x, y, z), end="")
             car.move(-z, 0)
 
         def my_pants_hook(mario: Mario, powerup: str):
@@ -42,7 +40,6 @@ with ev3.EV3(**EV3_SETTINGS) as brick:
             Args:
                 powerup (str): The powerup Mario turns into
             """
-            print("\rObtained the %s powerup".ljust(30) % powerup)
 
         async def init_marios():
             NUM_PLAYERS = 1
