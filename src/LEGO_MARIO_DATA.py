@@ -13,19 +13,24 @@ HEX_TO_COLOR_TILE = {
 
 # hex to Lego RGB codes
 HEX_TO_RGB_TILE = {             # Dec | Same Codes
-    0x02: 'Goomba',             #   2 | Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba
+    0x02: 'Goomba',             #   2 | Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba
     0x0b: 'Lego NES',           #  11 |
     0x0d: 'Thwimp',             #  13 |
     0x0e: 'Bob-omb',            #  14 |
     0x14: 'Rotation',           #  20 |
+    0x9f: 'Pink Yoshi',         #  25 |
     0x23: 'Poison Mushroom',    #  35 |
     0x29: '?-Block',            #  41 |
     0x2e: 'Cloud',              #  46 |
     0x30: 'Beetle',             #  48 | Para-Beetle, Mechakoopa
+    0x60: 'Boom Boom',          #  96 |
     0x6a: "Peach's Castle",     # 106 |
     0x81: 'Peeper',             # 129 |
     0x89: 'Spiny Cheep Cheep',  # 137 |
+    0x91: 'Wrench',             # 145 |
     0x99: 'BJR',                # 153 |
+    0xa0: "Gear",               # 160 |
+    0xab: 'Seesaw',             # 171 |
     0xae: 'Boo',                # 174 |
     0xb7: 'Flag',               # 183 |
     0xb8: 'Start',              # 184 |
@@ -46,9 +51,10 @@ HEX_TO_PANTS = {        # Pins
     0x22: "Builder"     #100010
 }
 
-# BLE Connection and Event Subscription
+# BLE Connection
 # https://github.com/bricklife/LEGO-Mario-Reveng
 LEGO_CHARACTERISTIC_UUID = "00001624-1212-efde-1623-785feabcd123"
+# Request Commmands
 REQUEST_RGB_COMMAND = bytearray([
                                 0x05, # message length
                                 0x00, # unused
@@ -58,6 +64,7 @@ REQUEST_RGB_COMMAND = bytearray([
                                 ])
 REQUEST_PANTS_COMMAND = bytearray([0x05, 0x00, 0x21, 0x02, 0x00])
 REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
+# Subscribtion Commandsh
 SUBSCRIBE_IMU_COMMAND =  bytearray([0x0A, # Length of message
                                     0x00, # unused, always 0
                                     0x41, # message type (41=Port Input Format Setup)
