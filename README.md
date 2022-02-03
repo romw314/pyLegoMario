@@ -20,3 +20,5 @@ mario.AddTileHook(my_tile_hook)
 loop = asyncio.get_event_loop()
 # loop.create_task(SOME COROUTINE)
 ```
+
+On Windows you will need Python 3.9 or higher for Bluetooth sockets to work properly.
