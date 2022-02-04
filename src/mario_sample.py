@@ -47,7 +47,7 @@ def my_pants_hook(mario: Mario, powerup: str):
     pass
 
 async def init_marios():
-    NUM_PLAYERS = 2
+    NUM_PLAYERS = 1
 
     # Initialize Marios
     print("Turn on Mario and press Bluetooth Button")
