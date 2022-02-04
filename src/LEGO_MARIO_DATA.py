@@ -26,7 +26,7 @@ HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0x60: 'Boom Boom',          #  96 |
     0x6a: "Peach's Castle",     # 106 |
     0x81: 'Peeper',             # 129 |
-    0x89: 'Spiny Cheep Cheep',  # 137 |
+    0x89: 'Urchin',             # 137 | Spiny Cheep Cheep
     0x91: 'Wrench',             # 145 |
     0x99: 'BJR',                # 153 |
     0xa0: "Gear",               # 160 |
