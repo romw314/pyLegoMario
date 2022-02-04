@@ -33,7 +33,8 @@ HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0xab: 'Seesaw',             # 171 |
     0xae: 'Boo',                # 174 |
     0xb7: 'Flag',               # 183 |
-    0xb8: 'Start',              # 184 |
+    0xb8: 'Start - Mario',      # 184 |
+    0xaf: 'Start - Luigi',      # 176 |
     0xf4: 'Coin Coffer'}        # 244 |
 
 # hex to pants codes
@@ -51,6 +52,11 @@ HEX_TO_PANTS = {        # Pins
     0x22: "Builder"     #100010
 }
 
+HEX_TO_HUB_ACTIONS = {
+    0x30: "Hub Will Switch Off",
+    0x31: "Hub Will Disconnect"
+}
+
 # BLE Connection
 # https://github.com/bricklife/LEGO-Mario-Reveng
 LEGO_CHARACTERISTIC_UUID = "00001624-1212-efde-1623-785feabcd123"
@@ -60,11 +66,11 @@ REQUEST_RGB_COMMAND = bytearray([
                                 0x00, # unused
                                 0x21, # message type (21=Port Information Request)
                                 0x01, # port ID
-                                0x00 # requested information type (0=Port Value)
+                                0x00  # requested information type (0=Port Value)
                                 ])
 REQUEST_PANTS_COMMAND = bytearray([0x05, 0x00, 0x21, 0x02, 0x00])
 REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
-# Subscribtion Commandsh
+# Subscribtion Commands
 SUBSCRIBE_IMU_COMMAND =  bytearray([0x0A, # Length of message
                                     0x00, # unused, always 0
                                     0x41, # message type (41=Port Input Format Setup)
@@ -96,3 +102,11 @@ SUBSCRIBE_PANTS_COMMAND = bytearray([0x0A,
                                     0x00, 
                                     0x00, 
                                     0x01])
+MUTE_COMMAND = bytearray([
+                        0x06, # message length
+                        0x00, # unused, always 0
+                        0x01, # message type (01 = Hub Properties)
+                        0x12, # specify hub property (12 = volume)
+                        0x01, # specify operation (1 = set new value)
+                        0x00  # new value (0 = mute, 100 = full volume)
+                        ])
