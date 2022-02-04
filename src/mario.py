@@ -34,8 +34,8 @@ from src.LEGO_MARIO_DATA import *
 # if you only access mario from parent directories, use
 # from .LEGO_MARIO_DATA import *
 
-import asyncio
-from bleak import BleakScanner, BleakClient
+import asyncio, aioconsole
+from bleak import BleakScanner, BleakClient, BleakError
 from typing import Callable, Union
 
 
@@ -153,6 +153,8 @@ class Mario:
         # other technical messages
         elif data[2] == 0x02: # Hub Actions
             self._log("%s, Hex: %s" % (HEX_TO_HUB_ACTIONS.get(data[3], "Unkown Hub Action, Hex: %s" % hex_data), hex_data))
+            if data[3] == 0x31: # 0x31 = Hub Will Disconnect
+                asyncio.get_event_loop().create_task(self.disconnect())
         elif data[2] == 0x04: # Hub Attached I/O
             self._log("Port %s got %s, Hex: %s" % (data[3], "attached" if data[4] else "detached - this shouldn't happen with Mario", hex_data))
         elif data[2] == 0x47: # Port Input Format Handshake
@@ -204,7 +206,7 @@ class Mario:
         if self._client:
             try:
                 await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*REQUEST_RGB_COMMAND[:3], port, *REQUEST_RGB_COMMAND[4:]]))
-            except OSError:
+            except (OSError, BleakError):
                 self._log("Connection error while requesting port value")
                 await self.disconnect()
 
@@ -218,7 +220,7 @@ class Mario:
         if self._client:
             try:
                 await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*MUTE_COMMAND[:5], new_volume]))
-            except OSError:
+            except (OSError, BleakError):
                 self._log("Connection error while setting volume")
                 await self.disconnect()
 
@@ -229,7 +231,7 @@ class Mario:
                     self._log("Disconnect detected during connection check")
                     await self.disconnect()
                 await asyncio.sleep(3)
-            except OSError:
+            except (OSError, BleakError):
                 self._log("Error during connection check")
                 await self.disconnect()
 
@@ -240,10 +242,14 @@ class Mario:
                 await self._client.disconnect()
                 self._client = None
             self._run = False
-        except OSError:
+        except (OSError, BleakError):
             self._log("Connection error while disconnecting")
             self._client = None
             self._run = False
+        
+        reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
+        if reconnect.lower().startswith("y"):
+            await self.connect()
 
 async def create_and_connect_mario(doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None) -> Mario:
     new_mario = Mario(**locals()) # **locals() passes the keyword arguments from above
