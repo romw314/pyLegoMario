@@ -84,32 +84,47 @@ class Mario:
             func(self, powerup)
 
     def _handle_events(self, sender, data: bytearray):
-        # Camera Sensor Data
-        if data[0] == 0x8:
-            if data[5] == data[6] == 0xff:
-                self._log("No Color or Barcode detected: %s" % data.hex())
-                return
-            # RGB code
-            if data[5] == 0x0:
-                self._log("%s Tile, Hex: %s" % (HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"), data.hex()))
-                self._callTileHooks(HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code: %s" % data.hex()))
-            # Ground Colors
-            elif data[5] == 0xff:
-                self._log("%s Ground, Hex: %s" % (HEX_TO_COLOR_TILE.get(data[6], "Unkown Color"), data.hex()))
-                self._callTileHooks(HEX_TO_COLOR_TILE.get(data[6], "Unkown Color: %s" % data.hex()))
+        hex_data = data.hex()
+        # Port Value
+        if data[2] == 0x45:
+            # Camera Sensor Data
+            if data[3] == 0x01:
+                if data[5] == data[6] == 0xff:
+                    self._log("IDLE? %s" % hex_data)
+                    return
+                # RGB code
+                if data[5] == 0x0:
+                    self._log("%s Tile, Hex: %s" % (HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"), hex_data))
+                    self._callTileHooks(HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code: %s" % hex_data))
+                # Ground Colors
+                elif data[5] == 0xff:
+                    self._log("%s Ground, Hex: %s" % (HEX_TO_COLOR_TILE.get(data[6], "Unkown Color"), hex_data))
+                    self._callTileHooks(HEX_TO_COLOR_TILE.get(data[6], "Unkown Color: %s" % hex_data))
 
-        # Accelerometer data
-        elif data[0] == 0x7:
-            x = int(self._signed(data[4]))
-            y = int(self._signed(data[5]))
-            z = int(self._signed(data[6]))
-            self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
-            self._callAccelerometerHooks(x, y, z)
+            # Accelerometer data
+            elif data[3] == 0x00:
+                x = int(self._signed(data[4]))
+                y = int(self._signed(data[5]))
+                z = int(self._signed(data[6]))
+                self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
+                self._callAccelerometerHooks(x, y, z)
 
-        # Pants data
-        elif data[0] == 0x5:
-            self._log("%s Pants, Hex: %s" % (HEX_TO_PANTS.get(data[4], "Unkown Powerup"), data.hex()))
-            self._callPantsHooks(HEX_TO_PANTS.get(data[4], "Unkown Powerup: Binary; %s, Hex: %s" % (bin(data[4]), data.hex())))
+            # Pants data
+            elif data[3] == 0x02:
+                pants = HEX_TO_PANTS.get(data[4], "Unkown")
+                binary_pants = bin(data[4])
+                self._log("%s Pants, Hex: %s, Pants-Only Binary: %s" % (pants, hex_data, binary_pants))
+                self._callPantsHooks(pants)
+
+        # other technical messages
+        elif data[2] == 0x02: # Hub Actions
+            self._log("%s, Hex: %s" % (HEX_TO_HUB_ACTIONS.get(data[3], "Unkown Hub Action, Hex: %s" % hex_data), hex_data))
+        elif data[2] == 0x04: # Hub Attached I/O
+            self._log("Port %s got %s, Hex: %s" % (data[3], "attached" if data[4] else "detached - this shouldn't happen with Mario", hex_data))
+        elif data[2] == 0x47: # Port Input Format Handshake
+            self._log("Port %s got changed into mode %s with notifications %s" % (data[3], data[4], "Enabled" if data[9] else "Disabled"))
+        else:   # Other
+            self._log("Unknown message - check the Lego Wireless Protocol for the following - Hex: %s" % hex_data)
 
     async def connect(self):
         self._run = True
@@ -153,9 +168,18 @@ class Mario:
         assert port in (0,1,2,3,4), "Only use ports 0-4"
         if self._client:
             try:
-                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, [*REQUEST_RGB_COMMAND[:3], port, *REQUEST_RGB_COMMAND[4:]])
+                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*REQUEST_RGB_COMMAND[:3], port, *REQUEST_RGB_COMMAND[4:]]))
             except OSError:
                 self._log("Connection error while requesting port value")
+                await self.disconnect()
+
+    async def set_volume(self, new_volume: int):
+        new_volume = min(max(new_volume, 0), 100)
+        if self._client:
+            try:
+                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*MUTE_COMMAND[:5], new_volume]))
+            except OSError:
+                self._log("Connection error while setting volume")
                 await self.disconnect()
 
     async def check_connection_loop(self):
