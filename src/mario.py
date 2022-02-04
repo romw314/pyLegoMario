@@ -36,17 +36,21 @@ from src.LEGO_MARIO_DATA import *
 
 import asyncio
 from bleak import BleakScanner, BleakClient
+from typing import Callable, Union
 
 
 class Mario:
 
-    def __init__(self, doLog=True):
-        self._tileEventHooks = []
+    def __init__(self, doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None):
         self._accelerometerEventHooks = []
+        self._tileEventHooks = []
         self._pantsEventHooks = []
         self._doLog = doLog
         self._run = True
         self._client = None
+        self.AddAccelerometerHook(accelerometerEventHooks)
+        self.AddTileHook(tileEventHooks)
+        self.AddPantsHook(pantsEventHooks)
 
     def _signed(self, char):
         return char - 256 if char > 127 else char
@@ -62,28 +66,58 @@ class Mario:
             address = "Not Connected" if not self._client else self._client.address
             print(("\r%s: %s" % (address, msg)).ljust(70), end=end)
 
-    def AddTileHook(self, func):
-        self._tileEventHooks.append(func)
+    def AddTileHook(self, funcs: Union[Callable, list]) -> None:
+        """Adds function(s) as event hooks for updated tile or color values.
 
-    def AddAccelerometerHook(self, func):
-        self._accelerometerEventHooks.append(func)
+        Args:
+            funcs (function or list of functions): function or list of functions that take (Mario, str) as input.
+        """
+        if hasattr(funcs, '__iter__'):
+            for function in funcs:
+                if callable(function):
+                    self._tileEventHooks.append(function)
+        elif callable(funcs):
+            self._tileEventHooks.append(funcs)
 
-    def AddPantsHook(self, func):
-        self._pantsEventHooks.append(func)
+    def AddAccelerometerHook(self, funcs: Union[Callable, list]) -> None:
+        """Adds function(s) as event hooks for updated accelerometer values.
 
-    def _callTileHooks(self, tile: str):
+        Args:
+            funcs (function or list of functions): function or list of functions that take (Mario, int, int, int) as input.
+        """
+        if hasattr(funcs, '__iter__'):
+            for function in funcs:
+                if callable(function):
+                    self._accelerometerEventHooks.append(function)
+        elif callable(funcs):
+            self._accelerometerEventHooks.append(funcs)
+
+    def AddPantsHook(self, funcs: Union[Callable, list]) -> None:
+        """Adds function(s) as event hooks for updated pants values.
+
+        Args:
+            funcs (function or list of functions): function or list of functions that take a Mario object and a single string as input.
+        """
+        if hasattr(funcs, '__iter__'):
+            for function in funcs:
+                if callable(function):
+                    self._pantsEventHooks.append(function)
+        elif callable(funcs):
+            self._pantsEventHooks.append(funcs)
+
+    def _callTileHooks(self, tile: str) -> None:
         for func in self._tileEventHooks:
             func(self, tile)
 
-    def _callAccelerometerHooks(self, x, y, z):
+    def _callAccelerometerHooks(self, x: int, y: int, z: int) -> None:
         for func in self._accelerometerEventHooks:
             func(self, x, y, z)
     
-    def _callPantsHooks(self, powerup: str):
+    def _callPantsHooks(self, powerup: str) -> None:
         for func in self._pantsEventHooks:
             func(self, powerup)
 
-    def _handle_events(self, sender, data: bytearray):
+    def _handle_events(self, sender, data: bytearray) -> None:
         hex_data = data.hex()
         # Port Value
         if data[2] == 0x45:
@@ -158,14 +192,15 @@ class Mario:
         0 - Accelerometer
         1 - Camera
         2 - Pants
-        3 - TBD
-        4 - TBD
+        3 - unknown
+        4 - unknown
+        6 - voltage?
         Response will be sent to event handlers.
 
         Args:
             port (int, optional): Port to request value from. Defaults to 0.
         """
-        assert port in (0,1,2,3,4), "Only use ports 0-4"
+        assert port in (0,1,2,3,4, 6), "Use a supported port (0,1,2,3,4,6)"
         if self._client:
             try:
                 await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*REQUEST_RGB_COMMAND[:3], port, *REQUEST_RGB_COMMAND[4:]]))
@@ -173,7 +208,12 @@ class Mario:
                 self._log("Connection error while requesting port value")
                 await self.disconnect()
 
-    async def set_volume(self, new_volume: int):
+    async def set_volume(self, new_volume: int) -> None:
+        """Sets mario's volume to the specified volume.
+
+        Args:
+            new_volume (int): Percentage of maximum volume. Values <0 or >100 will be set to 0 or 100 respectively.
+        """
         new_volume = min(max(new_volume, 0), 100)
         if self._client:
             try:
@@ -182,19 +222,18 @@ class Mario:
                 self._log("Connection error while setting volume")
                 await self.disconnect()
 
-    async def check_connection_loop(self):
+    async def check_connection_loop(self) -> None:
         while self._client:
             try:
                 if not self._client.is_connected:
-                    self._log("Disconnect detected")
+                    self._log("Disconnect detected during connection check")
                     await self.disconnect()
-                    return
                 await asyncio.sleep(3)
             except OSError:
                 self._log("Error during connection check")
                 await self.disconnect()
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         try:
             self._log("Disconnecting... ")
             if self._client:
@@ -206,8 +245,8 @@ class Mario:
             self._client = None
             self._run = False
 
-async def create_and_connect_mario(doLog=True):
-    new_mario = Mario(doLog=doLog)
+async def create_and_connect_mario(doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None) -> Mario:
+    new_mario = Mario(**locals()) # **locals() passes the keyword arguments from above
     await new_mario.connect()
     loop = asyncio.get_event_loop()
     loop.create_task(new_mario.check_connection_loop())

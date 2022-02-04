@@ -47,16 +47,16 @@ def my_pants_hook(mario: Mario, powerup: str):
     pass
 
 async def init_marios():
-    NUM_PLAYERS = 1
+    NUM_PLAYERS = 2
 
     # Initialize Marios
     print("Turn on Mario and press Bluetooth Button")
-    marios = [await create_and_connect_mario() for player in range(NUM_PLAYERS)]
-    
-    # Add Hook Functions
-    marios[0].AddAccelerometerHook(my_accelerometer_hook)
-    marios[0].AddTileHook(my_tile_hook)
+    marios = [await create_and_connect_mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook) for player in range(NUM_PLAYERS)]
+
+    # Manually Add Hook Functions
     marios[0].AddPantsHook(my_pants_hook)
+    # Change Mario's Volume
+    await marios[0].set_volume(50)
 
     loop = asyncio.get_event_loop()
     # loop.create_task(SOME COROUTINE)
