@@ -87,7 +87,7 @@ SUBSCRIBE_RGB_COMMAND =  bytearray([0x0A,
                                     0x41,
                                     0x01, # port ID 1=tile scanner
                                     0x00,
-                                    0x05,
+                                    0x02, # delta interval 2 is needed to recognize all colors
                                     0x00,
                                     0x00,
                                     0x00,
@@ -97,7 +97,7 @@ SUBSCRIBE_PANTS_COMMAND = bytearray([0x0A,
                                     0x41, 
                                     0x02, # port ID 2=pants sensor
                                     0x00, 
-                                    0x05, 
+                                    0x01, 
                                     0x00, 
                                     0x00, 
                                     0x00, 
@@ -110,3 +110,34 @@ MUTE_COMMAND = bytearray([
                         0x01, # specify operation (1 = set new value)
                         0x00  # new value (0 = mute, 100 = full volume)
                         ])
+DISCONNECT_COMMAND = bytearray([
+                        0x04, # message length
+                        0x00, # unused, always 0
+                        0x02, # message type (02 = HUB Actions)
+                        0x02, # specify action (02 = disconnect)
+                        ])
+TURN_OFF_COMMAND = bytearray([
+                        0x04, # message length
+                        0x00, # unused, always 0
+                        0x02, # message type (02 = HUB Actions)
+                        0x01, # specify action (01 = turn off)
+                        ])
+
+BINARY_GESTURES = {
+                0b0000000000000001: "Bump",
+                0b0000000000000010: "Gesture2",
+                0b0000000000000100: "Gesture4",
+                0b0000000000001000: "Gesture8",
+                0b0000000000010000: "Shake",
+                0b0000000000100000: "Gesture32", 
+                0b0000000001000000: "Gesture64",
+                0b0000000010000000: "Gesture128",
+                0b0000000100000000: "Turning",
+                0b0000001000000000: "Fastmove",
+                0b0000010000000000: "Translation",
+                0b0000100000000000: "HighFallCrash",
+                0b0001000000000000: "DirectionChange",
+                0b0010000000000000: "Reverse",
+                0b0100000000000000: "Gesture16384",
+                0b1000000000000000: "Jump"
+}
