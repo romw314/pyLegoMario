@@ -137,11 +137,22 @@ class Mario:
 
             # Accelerometer data
             elif data[3] == 0x00:
-                x = int(self._signed(data[4]))
-                y = int(self._signed(data[5]))
-                z = int(self._signed(data[6]))
-                self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
-                self._callAccelerometerHooks(x, y, z)
+                # Gesture Mode
+                if data[4:6] == data[6:]:
+                    gesture = ""
+                    integer_data = int.from_bytes(data[4:6], "big")
+                    for bin_gest in BINARY_GESTURES.keys():
+                        if integer_data & bin_gest:
+                            gesture += BINARY_GESTURES[bin_gest]
+                    self._log(gesture)
+
+                # RAW Mode
+                else:
+                    x = int(self._signed(data[4]))
+                    y = int(self._signed(data[5]))
+                    z = int(self._signed(data[6]))
+                    self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
+                    self._callAccelerometerHooks(x, y, z)
 
             # Pants data
             elif data[3] == 0x02:
@@ -149,6 +160,8 @@ class Mario:
                 binary_pants = bin(data[4])
                 self._log("%s Pants, Hex: %s, Pants-Only Binary: %s" % (pants, hex_data, binary_pants))
                 self._callPantsHooks(pants)
+            else:
+                self._log("Unknown port value - check the Lego Wireless Protocol for the following - Hex: %s" % hex_data)
 
         # other technical messages
         elif data[2] == 0x02: # Hub Actions
@@ -239,6 +252,7 @@ class Mario:
         try:
             self._log("Disconnecting... ")
             if self._client:
+                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, DISCONNECT_COMMAND)
                 await self._client.disconnect()
                 self._client = None
             self._run = False
@@ -250,6 +264,15 @@ class Mario:
         reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
         if reconnect.lower().startswith("y"):
             await self.connect()
+
+    async def turn_off(self) -> None:
+        try:
+            self._log("Turning Off... ")
+            await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, TURN_OFF_COMMAND)
+            await self.disconnect()
+        except (OSError, BleakError):
+                self._log("Connection error while turning off")
+                await self.disconnect()
 
 async def create_and_connect_mario(doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None) -> Mario:
     new_mario = Mario(**locals()) # **locals() passes the keyword arguments from above
