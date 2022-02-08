@@ -46,7 +46,7 @@ def my_pants_hook(mario: Mario, powerup: str):
     """
     pass
 
-async def init_marios():
+async def main():
     NUM_PLAYERS = 1
 
     # Initialize Marios
@@ -63,5 +63,5 @@ async def init_marios():
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.create_task(init_marios())
+    loop.create_task(main())
     loop.run_forever()
