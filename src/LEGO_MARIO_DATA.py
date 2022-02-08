@@ -23,6 +23,9 @@ HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0x29: '?-Block',            #  41 |
     0x2e: 'Cloud',              #  46 |
     0x30: 'Beetle',             #  48 | Para-Beetle, Mechakoopa
+    0x31: 'Moving Platform',    #  49 |
+    0x35: 'Lava Bubble',        #  51 |
+    0x37: 'Thwomp',             #  55 |
     0x60: 'Boom Boom',          #  96 |
     0x6a: "Peach's Castle",     # 106 |
     0x81: 'Peeper',             # 129 |
