@@ -36,30 +36,47 @@ from typing import Callable, Union
 
 class Mario:
 
-    def __init__(self, doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None):
+    def __init__(self, doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None, logEventHooks=None):
         self._accelerometerEventHooks = []
         self._tileEventHooks = []
         self._pantsEventHooks = []
+        self._logEventHooks = []
         self._doLog = doLog
         self._run = False
         self._client = None
         self.AddAccelerometerHook(accelerometerEventHooks)
         self.AddTileHook(tileEventHooks)
         self.AddPantsHook(pantsEventHooks)
+        self.AddLogHook(logEventHooks)
 
     def _signed(self, char):
         return char - 256 if char > 127 else char
 
     def _log(self, msg, end="\n"):
-        """Log any message to stdout. Will also include mario's address.
+        """Log any message to stdout and call all assigned LogEvent handlers.
 
         Args:
             msg (object): Any printable object.
             end (str, optional): Same as end in print(). Defaults to "\n".
         """
+        for func in self._logEventHooks:
+            func(self, msg)
         if self._doLog:
             address = "Not Connected" if not self._client else self._client.address
             print(("\r%s: %s" % (address, msg)).ljust(140), end=end)
+
+    def AddLogHook(self, funcs: Union[Callable, list]) -> None:
+        """Adds function(s) as event hooks for updated tile or color values.
+
+        Args:
+            funcs (function or list of functions): function or list of functions that take (Mario, str) as input.
+        """
+        if hasattr(funcs, '__iter__'):
+            for function in funcs:
+                if callable(function):
+                    self._logEventHooks.append(function)
+        elif callable(funcs):
+            self._logEventHooks.append(funcs)
 
     def AddTileHook(self, funcs: Union[Callable, list]) -> None:
         """Adds function(s) as event hooks for updated tile or color values.
@@ -99,6 +116,22 @@ class Mario:
                     self._pantsEventHooks.append(function)
         elif callable(funcs):
             self._pantsEventHooks.append(funcs)
+        
+    def RemoveEventsHook(self, funcs: Union[Callable, list]) -> None:
+        """Removes function(s) as event hooks, no matter what kind of hook they were.
+
+        Args:
+            funcs (function or list of functions): function or list of functions.
+        """
+        if hasattr(funcs, '__iter__'):
+            for hooktype in (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks):
+                for function in funcs:
+                    if callable(function) and function in hooktype:
+                        hooktype.remove(function)
+        elif callable(funcs):
+            for hooktype in (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks):
+                if funcs in hooktype:
+                    hooktype.remove(funcs)
 
     def _callTileHooks(self, tile: str) -> None:
         for func in self._tileEventHooks:
