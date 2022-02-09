@@ -4,7 +4,7 @@ This is a sample on how to use mario.py. It shows how to register event hook
 functions and how to let the script run as an endless loop.
 ###################################################################################
 MIT License
-Copyright (c) 2020 Bruno Hautzenberger
+Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
