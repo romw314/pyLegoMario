@@ -39,6 +39,7 @@ HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0xb7: 'Flag',               # 183 |
     0xb8: 'Start - Mario',      # 184 |
     0xaf: 'Start - Luigi',      # 176 |
+    0xf2: 'Bully',              # 242 |
     0xf4: 'Coin Coffer'}        # 244 |
 
 # hex to pants codes
@@ -127,7 +128,7 @@ TURN_OFF_COMMAND = bytearray([
                         0x01, # specify action (01 = turn off)
                         ])
 
-BINARY_GESTURES = {
+BINARY_GESTURES = { # most likely wrong
                 0b0000000000000001: "Bump",
                 0b0000000000000010: "Gesture2",
                 0b0000000000000100: "Gesture4",
