@@ -1,13 +1,8 @@
 """
 MARIO.PY
-This is a little script that connects to Lego Mario and then reads its
-acceleromter and tile sensor data. It does so until you call Stop() and turn of 
-Mario. It also automatically reconnects to MArio if it it looses the connection.
-To connect you have to turn Mario on and then press the Bluetooth Button.
-See sample.py on how to use it.
 ###################################################################################
 MIT License
-Copyright (c) 2020 Bruno Hautzenberger
+Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -46,7 +41,7 @@ class Mario:
         self._tileEventHooks = []
         self._pantsEventHooks = []
         self._doLog = doLog
-        self._run = True
+        self._run = False
         self._client = None
         self.AddAccelerometerHook(accelerometerEventHooks)
         self.AddTileHook(tileEventHooks)
@@ -64,7 +59,7 @@ class Mario:
         """
         if self._doLog:
             address = "Not Connected" if not self._client else self._client.address
-            print(("\r%s: %s" % (address, msg)).ljust(70), end=end)
+            print(("\r%s: %s" % (address, msg)).ljust(140), end=end)
 
     def AddTileHook(self, funcs: Union[Callable, list]) -> None:
         """Adds function(s) as event hooks for updated tile or color values.
@@ -127,7 +122,7 @@ class Mario:
                     self._log("IDLE? %s" % hex_data)
                     return
                 # RGB code
-                if data[5] == 0x0:
+                if data[5] == 0x00:
                     self._log("%s Tile, Hex: %s" % (HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"), hex_data))
                     self._callTileHooks(HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code: %s" % hex_data))
                 # Ground Colors
@@ -255,15 +250,15 @@ class Mario:
                 await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, DISCONNECT_COMMAND)
                 await self._client.disconnect()
                 self._client = None
-            self._run = False
         except (OSError, BleakError):
             self._log("Connection error while disconnecting")
             self._client = None
-            self._run = False
         
         reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
         if reconnect.lower().startswith("y"):
             await self.connect()
+        else:
+            self._run = False
 
     async def turn_off(self) -> None:
         try:
