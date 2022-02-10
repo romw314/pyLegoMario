@@ -64,7 +64,7 @@ class Mario:
             func(self, msg)
         if self._doLog:
             address = "Not Connected" if not self._client else self._client.address
-            print(("\r%s: %s" % (address, msg)).ljust(140), end=end)
+            print(("\r%s: %s" % (address, msg)).ljust(100), end=end)
 
     def AddLogHook(self, funcs: Union[Callable, list]) -> None:
         """Adds function(s) as event hooks for updated tile or color values.
@@ -230,6 +230,7 @@ class Mario:
                         self._log("Error connecting")
                         await self.disconnect()
                         return False
+        await self.disconnect()
 
     async def request_port_value(self, port:int=0) -> None:
         """Method for sending request for color sensor port value to Mario.
@@ -289,9 +290,17 @@ class Mario:
             self._log("Connection error while disconnecting")
             self._client = None
         self._run = False
+        reconnect_task = asyncio.create_task(self.ask_reconnect())
+        while not self._run:
+            await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
+        if not reconnect_task.done():
+            reconnect_task.cancel()
+    
+    async def ask_reconnect(self):
         reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
         if reconnect.lower().startswith("y"):
-            await self.connect()
+            asyncio.create_task(self.connect())
         else:
             pass
 
