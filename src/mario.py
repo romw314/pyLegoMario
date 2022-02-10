@@ -36,7 +36,7 @@ from typing import Callable, Union
 
 class Mario:
 
-    def __init__(self, doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None, logEventHooks=None):
+    def __init__(self, doLog: bool=True, accelerometerEventHooks: Union[Callable, list]=None, tileEventHooks: Union[Callable, list]=None, pantsEventHooks: Union[Callable, list]=None, logEventHooks: Union[Callable, list]=None):
         self._accelerometerEventHooks = []
         self._tileEventHooks = []
         self._pantsEventHooks = []
@@ -48,6 +48,7 @@ class Mario:
         self.AddTileHook(tileEventHooks)
         self.AddPantsHook(pantsEventHooks)
         self.AddLogHook(logEventHooks)
+        self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks, self._logEventHooks)
 
     def _signed(self, char):
         return char - 256 if char > 127 else char
@@ -123,13 +124,14 @@ class Mario:
         Args:
             funcs (function or list of functions): function or list of functions.
         """
+        
         if hasattr(funcs, '__iter__'):
-            for hooktype in (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks):
+            for hooktype in self.ALLHOOKS:
                 for function in funcs:
                     if callable(function) and function in hooktype:
                         hooktype.remove(function)
         elif callable(funcs):
-            for hooktype in (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks):
+            for hooktype in self.ALLHOOKS:
                 if funcs in hooktype:
                     hooktype.remove(funcs)
 
@@ -152,7 +154,7 @@ class Mario:
             # Camera Sensor Data
             if data[3] == 0x01:
                 if data[5] == data[6] == 0xff:
-                    self._log("IDLE? %s" % hex_data)
+                    self._log("IDLE?, Hex: %s" % hex_data)
                     return
                 # RGB code
                 if data[5] == 0x00:
@@ -186,10 +188,10 @@ class Mario:
             elif data[3] == 0x02:
                 pants = HEX_TO_PANTS.get(data[4], "Unkown")
                 binary_pants = bin(data[4])
-                self._log("%s Pants, Hex: %s, Pants-Only Binary: %s" % (pants, hex_data, binary_pants))
+                self._log("%s Pants, Pants-Only Binary: %s, Hex: %s" % (pants, binary_pants, hex_data))
                 self._callPantsHooks(pants)
             else:
-                self._log("Unknown port value - check the Lego Wireless Protocol for the following - Hex: %s" % hex_data)
+                self._log("Unknown port value - check Lego Wireless Protocol - Hex: %s" % hex_data)
 
         # other technical messages
         elif data[2] == 0x02: # Hub Actions
@@ -199,9 +201,9 @@ class Mario:
         elif data[2] == 0x04: # Hub Attached I/O
             self._log("Port %s got %s, Hex: %s" % (data[3], "attached" if data[4] else "detached - this shouldn't happen with Mario", hex_data))
         elif data[2] == 0x47: # Port Input Format Handshake
-            self._log("Port %s got changed into mode %s with notifications %s" % (data[3], data[4], "Enabled" if data[9] else "Disabled"))
+            self._log("Port %s changed to mode %s %s notifications, Hex: %s" % (data[3], data[4], "with" if data[9] else "without", hex_data))
         else:   # Other
-            self._log("Unknown message - check the Lego Wireless Protocol for the following - Hex: %s" % hex_data)
+            self._log("Unknown message - check Lego Wireless Protocol, Hex: %s" % hex_data)
 
     async def connect(self):
         self._run = True
@@ -286,12 +288,12 @@ class Mario:
         except (OSError, BleakError):
             self._log("Connection error while disconnecting")
             self._client = None
-        
+        self._run = False
         reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
         if reconnect.lower().startswith("y"):
             await self.connect()
         else:
-            self._run = False
+            pass
 
     async def turn_off(self) -> None:
         try:
