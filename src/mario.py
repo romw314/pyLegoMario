@@ -43,12 +43,14 @@ class Mario:
         self._logEventHooks = []
         self._doLog = doLog
         self._run = False
+        self._autoReconnect = True
         self._client = None
         self.AddAccelerometerHook(accelerometerEventHooks)
         self.AddTileHook(tileEventHooks)
         self.AddPantsHook(pantsEventHooks)
         self.AddLogHook(logEventHooks)
         self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks, self._logEventHooks)
+        asyncio.get_event_loop().create_task(self.connect())
 
     def _signed(self, char):
         return char - 256 if char > 127 else char
@@ -191,7 +193,7 @@ class Mario:
                 self._log("%s Pants, Pants-Only Binary: %s, Hex: %s" % (pants, binary_pants, hex_data))
                 self._callPantsHooks(pants)
             else:
-                self._log("Unknown port value - check Lego Wireless Protocol - Hex: %s" % hex_data)
+                self._log("Unknown port value - check Lego Wireless Protocol, Hex: %s" % hex_data)
 
         # other technical messages
         elif data[2] == 0x02: # Hub Actions
@@ -225,6 +227,7 @@ class Mario:
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_PANTS_COMMAND)
                         client.is_connected
+                        asyncio.get_event_loop().create_task(self.check_connection_loop())
                         return True
                     except: # any error during communication
                         self._log("Error connecting")
@@ -246,7 +249,7 @@ class Mario:
         Args:
             port (int, optional): Port to request value from. Defaults to 0.
         """
-        assert port in (0,1,2,3,4, 6), "Use a supported port (0,1,2,3,4,6)"
+        assert port in (0,1,2,3,4,6), "Use a supported port (0,1,2,3,4,6)"
         if self._client:
             try:
                 await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*REQUEST_RGB_COMMAND[:3], port, *REQUEST_RGB_COMMAND[4:]]))
@@ -289,20 +292,10 @@ class Mario:
         except (OSError, BleakError):
             self._log("Connection error while disconnecting")
             self._client = None
-        self._run = False
-        reconnect_task = asyncio.create_task(self.ask_reconnect())
-        while not self._run:
-            await asyncio.sleep(0.1)
-        await asyncio.sleep(1)
-        if not reconnect_task.done():
-            reconnect_task.cancel()
-    
-    async def ask_reconnect(self):
-        reconnect = await aioconsole.ainput("Reconnect? (Y/N)")
-        if reconnect.lower().startswith("y"):
-            asyncio.create_task(self.connect())
+        if self._autoReconnect:
+            await self.connect()
         else:
-            pass
+            self._run = False
 
     async def turn_off(self) -> None:
         try:
@@ -312,10 +305,3 @@ class Mario:
         except (OSError, BleakError):
                 self._log("Connection error while turning off")
                 await self.disconnect()
-
-async def create_and_connect_mario(doLog=True, accelerometerEventHooks=None, tileEventHooks=None, pantsEventHooks=None) -> Mario:
-    new_mario = Mario(**locals()) # **locals() passes the keyword arguments from above
-    await new_mario.connect()
-    loop = asyncio.get_event_loop()
-    loop.create_task(new_mario.check_connection_loop())
-    return new_mario
