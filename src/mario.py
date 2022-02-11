@@ -209,7 +209,12 @@ class Mario:
 
     async def connect(self):
         self._run = True
+        retries=0
         while self._run:
+            retries+=1
+            if retries > 5:
+                self._log("Stopped after 5 attempts, disconnecting...")
+                break
             self._log("Searching for device...")
             devices = await BleakScanner.discover()
             for d in devices:
