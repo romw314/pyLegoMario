@@ -1,14 +1,19 @@
+from time import sleep
 import tkinter as tk
-
+from pathlib import Path
 import mario, asyncio
 from LEGO_MARIO_DATA import *
 
 class MarioWindow(tk.Frame):
     def __init__(self, mario: mario.Mario, master=None):
         tk.Frame.__init__(self, master)
-        self.master.title("Lego Mario")
+        self.master.minsize(644, 165)
+        
+        self.master.iconbitmap(Path(__file__).parent / "icon.ico")
         self._mario = mario
-        self.grid()
+        self.pack(fill=tk.BOTH, expand=True)
+        self.columnconfigure([0,1,2,3],weight=1)
+        self.rowconfigure(1,weight=1)
         # Acceleration Data
         # Frame for Labels + Entries
         self.accelerationFrame = tk.Frame(self)
@@ -64,19 +69,27 @@ class MarioWindow(tk.Frame):
         self.volumeScale.grid(row=1, column=5)
 
         # Logging Data
-        self.LOGBOXWIDTH = 80
         self.logText = tk.StringVar()
-        self.logBox = tk.Text(self, state=tk.DISABLED, width=self.LOGBOXWIDTH)
-        self.logBox.grid(row=1, columnspan=6)
+        self.logBox = tk.Text(self, state=tk.DISABLED, width=80)
+        self.logBox.grid(row=1, columnspan=6, sticky=tk.NSEW)
         self._mario.AddLogHook(self.input_log_data)
 
+        # Frame for Buttons
+        self.buttonFrame = tk.Frame(self)
+        self.buttonFrame.grid(row=2, column=0, columnspan=2, sticky=tk.EW)
+        self.buttonFrame.columnconfigure([0,1,2],weight=1)
+
         # Button for connecting Mario
-        self.connectButton = tk.Button(self, text="Connect", command=self.dis_connect_mario)
-        self.connectButton.grid(row=2, column=0)
+        self.connectButton = tk.Button(self.buttonFrame, text="Connect", command=self.dis_connect_mario)
+        self.connectButton.grid(row=0, column=0)
 
         # Button for Quitting the window
-        self.quitButton = tk.Button(self, text='Quit', command=self.quit)
-        self.quitButton.grid(row=2, column=1)
+        self.quitButton = tk.Button(self.buttonFrame, text='Quit', command=self.quit)
+        self.quitButton.grid(row=0, column=1)
+
+        # Button for Turning Mario off
+        self.turnOffButton = tk.Button(self.buttonFrame, text="Turn Off", command=self.turn_mario_off)
+        self.turnOffButton.grid(row=0, column=2)
 
         # Checkbox for AutoReconnect
         self.reconnectVar = tk.IntVar(self, value=1) 
@@ -96,6 +109,7 @@ class MarioWindow(tk.Frame):
         self.requestPortValueButton.grid(row=1, column=2)
 
         # display and update the window
+        
         asyncio.get_event_loop().create_task(self.run_window())
 
     def dis_connect_mario(self):
@@ -112,6 +126,9 @@ class MarioWindow(tk.Frame):
     def set_auto_reconnect(self):
         self._mario._autoReconnect = bool(self.reconnectVar.get())
 
+    def turn_mario_off(self):
+        asyncio.create_task(self._mario.turn_off())
+
     def request_port(self, port: int):
         asyncio.get_event_loop().create_task(self._mario.request_port_value(port))
     
@@ -126,7 +143,7 @@ class MarioWindow(tk.Frame):
         try:
             # format message nicely by splitting pure message (Hexadecimal) and human readable string
             content, hex_msg = msg.split(", Hex: ")
-            msg = "%s%s" % (content.ljust(self.LOGBOXWIDTH - len(hex_msg)), hex_msg)
+            msg = "%s%s" % (content.ljust(self.logBox["width"] - len(hex_msg)), hex_msg)
         except ValueError:
             # unable to split/format: leave message untouched
             pass
@@ -194,18 +211,21 @@ class MarioWindow(tk.Frame):
                 # Mario is connected and running
                 if self._mario._client:
                     self.requestPortValueButton.config(state=tk.NORMAL)
+                    self.turnOffButton.config(state=tk.NORMAL)
                     self.connectButton.config(text="Disconnect", state=tk.NORMAL)
                     self.volumeScale.config(state=tk.NORMAL)
                     self.master.title("Lego Mario - %s" % self._mario._client.address)
                 # Mario is disconnected and not trying to connect
                 elif not self._mario._run:
                     self.requestPortValueButton.config(state=tk.DISABLED)
+                    self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Not Connected")
                     self.connectButton.config(text="Connect", state=tk.NORMAL)
                     self.volumeScale.config(state=tk.DISABLED)
                 # Mario is running, but not connected (currently trying to connect)
                 else:
                     self.requestPortValueButton.config(state=tk.DISABLED)
+                    self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Connecting...")
                     self.connectButton.config(state=tk.DISABLED)
                     self.volumeScale.config(state=tk.DISABLED)
@@ -218,4 +238,5 @@ class MarioWindow(tk.Frame):
                 print(e.args) # debug
 
 a = MarioWindow(mario.Mario())
-asyncio.get_event_loop().run_forever()
+while asyncio.all_tasks(loop=asyncio.get_event_loop()):
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=asyncio.get_event_loop())))
