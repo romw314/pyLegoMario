@@ -51,7 +51,7 @@ with ev3.EV3(**EV3_SETTINGS) as brick:
 
                 # Initialize Marios
                 print("Turn on Mario and press Bluetooth Button")
-                marios = [await create_and_connect_mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook, pantsEventHooks=None) for player in range(NUM_PLAYERS)]
+                marios = [Mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook, pantsEventHooks=None) for player in range(NUM_PLAYERS)]
                 
                 # Add Hook Functions
                 marios[0].AddPantsHook(my_pants_hook)
