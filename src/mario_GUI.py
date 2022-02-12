@@ -1,19 +1,22 @@
-from time import sleep
 import tkinter as tk
 from pathlib import Path
 import mario, asyncio
 from LEGO_MARIO_DATA import *
+from PIL import ImageTk, Image
 
 class MarioWindow(tk.Frame):
-    def __init__(self, mario: mario.Mario, master=None):
+    def __init__(self, mario_entity: mario.Mario, master=None):
+        self._mario = mario_entity
         tk.Frame.__init__(self, master)
+        # Window Setup
         self.master.minsize(644, 165)
-        
         self.master.iconbitmap(Path(__file__).parent / "icon.ico")
-        self._mario = mario
+
+        # Resizing Geometry
         self.pack(fill=tk.BOTH, expand=True)
         self.columnconfigure([0,1,2,3],weight=1)
         self.rowconfigure(1,weight=1)
+
         # Acceleration Data
         # Frame for Labels + Entries
         self.accelerationFrame = tk.Frame(self)
@@ -40,33 +43,39 @@ class MarioWindow(tk.Frame):
         self._mario.AddAccelerometerHook(self.input_acceleration_data)
 
         # Pants Data
-        self.pantsFrame = tk.Frame(self)
-        self.pantsFrame.grid(row=0, column=2)
-        self.pantsLabel = tk.Label(self.pantsFrame, text="Pants")
+        # Variable to Access Pants Data
         self.pantsText = tk.StringVar()
+        # Frame to Hold Other Widgets (Not Visible Itself)
+        self.pantsFrame = tk.Frame(self)
+        # Visible Stuff
+        self.pantsLabel = tk.Label(self.pantsFrame, text="Pants") # Purely Descriptive Label, No Interaction
         self.pantsBox = tk.Entry(self.pantsFrame, width=len(max(HEX_TO_PANTS.values(), key=len)), state="readonly", textvariable=self.pantsText)
-        self.pantsLabel.grid(row=0)
-        self.pantsBox.grid(row=1)
+        
+        self.pantsFrame.grid(row=0, column=2) # Grid Frame On Mainframe
+        self.pantsLabel.grid(row=0) # Grid Label on pantsFrame
+        self.pantsBox.grid(row=1) # Grid Entry on pantsFrame
+        # Add Event Hook to Mario
         self._mario.AddPantsHook(self.input_pants_data)
 
         # RGB Data
-        self.rgbFrame = tk.Frame(self)
-        self.rgbFrame.grid(row=0, column=1)
-        self.rgbLabel = tk.Label(self.rgbFrame, text="RGB/Tile")
         self.rgbText = tk.StringVar()
+        self.rgbFrame = tk.Frame(self)
+        self.rgbLabel = tk.Label(self.rgbFrame, text="RGB/Tile")
         self.rgbBox = tk.Entry(self.rgbFrame, width=len(max(list(HEX_TO_RGB_TILE.values()) + list(HEX_TO_COLOR_TILE.values()), key=len)), state='readonly', textvariable=self.rgbText)
+        self.rgbFrame.grid(row=0, column=1)
         self.rgbLabel.grid(row=0)
         self.rgbBox.grid(row=1)
         self._mario.AddTileHook(self.input_rgb_data)
 
         # Scale for Adjusting Volume
         self.volumeFrame = tk.Frame(self)
-        self.volumeFrame.grid(row=0, column=3)
+        
         self.volumeLabel = tk.Label(self.volumeFrame, text="Volume")
         self.volumeVar = tk.IntVar(value=100)
         self.volumeScale = tk.Scale(self.volumeFrame, variable=self.volumeVar, from_=0, to=100, orient=tk.HORIZONTAL, command=self.set_mario_volume)
-        self.volumeLabel.grid(row=0, column=5)
-        self.volumeScale.grid(row=1, column=5)
+        self.volumeFrame.grid(row=0, column=3) # Grid Frame on Mainframe
+        self.volumeLabel.grid(row=0, column=5) # Grid Label on volumeFrame
+        self.volumeScale.grid(row=1, column=5) # Grid Scale on volumeFrame
 
         # Logging Data
         self.logText = tk.StringVar()
@@ -97,19 +106,18 @@ class MarioWindow(tk.Frame):
         self.reconnectCheckBox.grid(row=2, column=2)
 
         # Request Port Values
+        self.portVar = tk.IntVar(self, value=0)
         # Frame for All Content Regarding Port Values
         self.portFrame = tk.Frame(self)
-        self.portFrame.grid(row=2, column=3)
-        # Radiobutton for Each Port (Grid All to Frame)
-        self.portVar = tk.IntVar(self, value=0)
-        for port in (1,2,3,4,6): # no Port 0 because accelerometer messages aren't printed to Log
-            tk.Radiobutton(self.portFrame, variable=self.portVar, value=port, text="Port %s" % port).grid(row=(port-1 )//3, column=(port-1)%3 if port!= 6 else 1)
         # Button to Request Value
         self.requestPortValueButton = tk.Button(self.portFrame, text="Request Value", command=lambda: self.request_port(self.portVar.get()))
+        # Radiobutton for Each Port (Grid All to portFrame)
+        for port in (1,2,3,4,6): # no Port 0 because accelerometer messages aren't printed to Log, no Port 5 because it doesn't exist
+            tk.Radiobutton(self.portFrame, variable=self.portVar, value=port, text="Port %s" % port).grid(row=(port-1 )//3, column=(port-1)%3 if port!= 6 else 1)
+        self.portFrame.grid(row=2, column=3)
         self.requestPortValueButton.grid(row=1, column=2)
 
         # display and update the window
-        
         asyncio.get_event_loop().create_task(self.run_window())
 
     def dis_connect_mario(self):
@@ -120,16 +128,30 @@ class MarioWindow(tk.Frame):
         elif self._mario._client:
             asyncio.create_task(self._mario.disconnect())
 
-    def set_mario_volume(self, volume):
+    def set_mario_volume(self, placeholder):
+        """Creates asyncio task of Mario's set_volume Coroutine.\n
+        The new volume is the current value of self.volumeVar (set by the volumeScale).
+
+        Args:
+            placeholder (any): This argument is NOT used! It exists only for compatibility with tk.Scale's way of calling its command.
+        """
         asyncio.create_task(self._mario.set_volume(self.volumeVar.get()))
     
     def set_auto_reconnect(self):
+        """Sets Mario's ._autoReconnect attribute to the current value of self.reconnectVar (determined by self.reconnectCheckBox)."""
         self._mario._autoReconnect = bool(self.reconnectVar.get())
 
     def turn_mario_off(self):
+        """Creates asyncio task of Mario's .turn_off() Coroutine.
+        """
         asyncio.create_task(self._mario.turn_off())
 
     def request_port(self, port: int):
+        """Creates asyncio task of Mario's .request_port_value(port) Coroutine.
+
+        Args:
+            port (int): The port to be requested. Must be in (0,1,2,3,4,6)
+        """
         asyncio.get_event_loop().create_task(self._mario.request_port_value(port))
     
     def input_log_data(self, sender: mario.Mario, msg: str):
