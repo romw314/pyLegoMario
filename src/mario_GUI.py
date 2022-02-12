@@ -7,11 +7,14 @@ from PIL import ImageTk, Image
 class MarioWindow(tk.Frame):
     def __init__(self, mario_entity: mario.Mario, master=None):
         self._mario = mario_entity
-        tk.Frame.__init__(self, master)
+        tk.Frame.__init__(self, master if tk._default_root else tk.Toplevel())
         # Window Setup
         self.master.minsize(644, 165)
         self.master.iconbitmap(Path(__file__).parent / "icon.ico")
-
+        bg_image = Image.open(Path(__file__).parent / "background.png")
+        self.bg_image_tk = ImageTk.PhotoImage(bg_image)
+        background_label = tk.Label(self, image=self.bg_image_tk)
+        background_label.place(x=0,y=0, relheight=1, relwidth=1)
         # Resizing Geometry
         self.pack(fill=tk.BOTH, expand=True)
         self.columnconfigure([0,1,2,3],weight=1)
@@ -68,14 +71,11 @@ class MarioWindow(tk.Frame):
         self._mario.AddTileHook(self.input_rgb_data)
 
         # Scale for Adjusting Volume
-        self.volumeFrame = tk.Frame(self)
-        
-        self.volumeLabel = tk.Label(self.volumeFrame, text="Volume")
+        self.volumeFrame = tk.Frame(self, bg="#5c94fc")
         self.volumeVar = tk.IntVar(value=100)
-        self.volumeScale = tk.Scale(self.volumeFrame, variable=self.volumeVar, from_=0, to=100, orient=tk.HORIZONTAL, command=self.set_mario_volume)
+        self.volumeScale = tk.Scale(self.volumeFrame, variable=self.volumeVar, from_=0, to=100, orient=tk.HORIZONTAL, command=self.set_mario_volume, label="Volume", highlightthickness=0)
         self.volumeFrame.grid(row=0, column=3) # Grid Frame on Mainframe
-        self.volumeLabel.grid(row=0, column=5) # Grid Label on volumeFrame
-        self.volumeScale.grid(row=1, column=5) # Grid Scale on volumeFrame
+        self.volumeScale.grid(row=0, column=0) # Grid Scale on volumeFrame
 
         # Logging Data
         self.logText = tk.StringVar()
@@ -84,7 +84,7 @@ class MarioWindow(tk.Frame):
         self._mario.AddLogHook(self.input_log_data)
 
         # Frame for Buttons
-        self.buttonFrame = tk.Frame(self)
+        self.buttonFrame = tk.Frame(self, bg="#5c94fc")
         self.buttonFrame.grid(row=2, column=0, columnspan=2, sticky=tk.EW)
         self.buttonFrame.columnconfigure([0,1,2],weight=1)
 
@@ -215,6 +215,7 @@ class MarioWindow(tk.Frame):
         """
         # Remove Hooks from Mario
         self._mario.RemoveEventsHook((self.input_acceleration_data, self.input_pants_data, self.input_rgb_data, self.input_log_data))
+        self._mario._autoReconnect = False
         # Close Window
         try:
             self.master.destroy()
@@ -260,5 +261,6 @@ class MarioWindow(tk.Frame):
                 print(e.args) # debug
 
 a = MarioWindow(mario.Mario())
+b = MarioWindow(mario.Mario())
 while asyncio.all_tasks(loop=asyncio.get_event_loop()):
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=asyncio.get_event_loop())))
