@@ -1,24 +1,21 @@
 # pyLegoMario
-src/mario.py is a little script that connects to Lego Mario and then reads its
-acceleromter and tile sensor data. It does so until you call Stop() and turn of 
-Mario.
+pyLegoMario is a little script that connects to Lego Mario and then reads its
+acceleromter and tile sensor data.
 To connect you have to turn Mario on and then press the Bluetooth Button.
-See src/mario_sample.py for a logging sample on how to use it (outputting all data Mario receives)
+See mario_sample.py for a nice sample.
+To disconnect you have to await Mario.disconnect() or await Mario.turn_off(), as well as set Mario._autoReconnect = False
 
 
 ## TL;DR;
 "just show me how to use it!"
 ```python
+from pyLegoMario import Mario, MarioWindow, run
 # Initialize Mario
-print("Turn on Mario and press Bluetooth Button")
-mario = await create_and_connect_mario()
-
-# Add Hook Functions
-mario.AddAccelerometerHook(my_accelerometer_hook)
-mario.AddTileHook(my_tile_hook)
-
-loop = asyncio.get_event_loop()
-# loop.create_task(SOME COROUTINE)
+mario = Mario()
+# Create GUI
+MarioWindow(mario)
+# call run() to keep asyncio loop running until all tasks are done
+run()
 ```
 
 On Windows you will need Python 3.9 or higher for Bluetooth sockets to work properly.
