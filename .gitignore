@@ -102,8 +102,11 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+LegoMario.code-workspace
+LegoEnv/
 .env
 .venv
+.vscode/
 env/
 venv/
 ENV/

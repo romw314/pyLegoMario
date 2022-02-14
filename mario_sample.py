@@ -23,7 +23,8 @@ SOFTWARE.
 """
 
 import asyncio
-from mario import Mario
+from pyLegoMario import Mario, MarioWindow, run
+
 def my_tile_hook(mario: Mario, t: str):
     """
     Test Function which will be called as soon as a tile is detected by Mario.
@@ -46,22 +47,22 @@ def my_pants_hook(mario: Mario, powerup: str):
     """
     pass
 
-async def main():
-    NUM_PLAYERS = 1
-
-    # Initialize Marios
-    print("Turn on Mario and press Bluetooth Button")
-    marios = [Mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook) for player in range(NUM_PLAYERS)]
-
-    # Add Event Hooks in Constructor (above) or manually (below)
-    marios[0].AddPantsHook(my_pants_hook)
-    # Change Mario's Volume (0-100)
-    await marios[0].set_volume(40)
-
-    loop = asyncio.get_event_loop()
-    # loop.create_task(SOME COROUTINE)
 
 if __name__ == "__main__":
+    NUM_PLAYERS = 1
+    # Initialize Marios
+    marios = [Mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook) for player in range(NUM_PLAYERS)]
+    """Add Event Hooks in constructor (above) or manually (below).
+    Event hooks are functions that are called every time Mario sends data of a certain kind.
+    The functions in this example don't do anything. Try inserting a print call."""
+    # create GUI windows
+    for mario in marios:
+        MarioWindow(marios[0])
+    marios[0].AddPantsHook(my_pants_hook)
+    # Change Mario's Volume (0-100)
     loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+    loop.create_task(marios[0].set_volume(40))
+    # loop.create_task(SOME COROUTINE)
+    
+    
+    run()

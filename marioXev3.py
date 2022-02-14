@@ -1,7 +1,7 @@
 import ev3_dc as ev3
 from thread_task import Sleep
 import asyncio
-from mario import Mario
+from pyLegoMario import Mario, run
 
 EV3_SETTINGS = {"protocol":ev3.BLUETOOTH, "host":"00:16:53:81:D7:E2"}
 with ev3.EV3(**EV3_SETTINGS) as brick:
@@ -46,20 +46,15 @@ with ev3.EV3(**EV3_SETTINGS) as brick:
                     powerup (str): The powerup Mario turns into
                 """
 
-            async def main():
+            if __name__ == "__main__":
                 NUM_PLAYERS = 1
 
                 # Initialize Marios
-                print("Turn on Mario and press Bluetooth Button")
                 marios = [Mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook, pantsEventHooks=None) for player in range(NUM_PLAYERS)]
                 
                 # Add Hook Functions
                 marios[0].AddPantsHook(my_pants_hook)
-
                 loop = asyncio.get_event_loop()
                 # loop.create_task(SOME COROUTINE)
 
-            if __name__ == "__main__":
-                loop = asyncio.get_event_loop()
-                loop.create_task(main())
-                loop.run_forever()
+                run()

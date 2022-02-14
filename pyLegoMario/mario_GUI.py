@@ -1,11 +1,12 @@
 import tkinter as tk
 from pathlib import Path
-import mario, asyncio
-from LEGO_MARIO_DATA import *
+import asyncio
+from .mario import Mario
+from .LEGO_MARIO_DATA import *
 from PIL import ImageTk, Image
 
 class MarioWindow(tk.Frame):
-    def __init__(self, mario_entity: mario.Mario, master=None):
+    def __init__(self, mario_entity: Mario, master=None):
         self._mario = mario_entity
         tk.Frame.__init__(self, tk.Toplevel() if tk._default_root else master)
         # Window Setup
@@ -154,11 +155,11 @@ class MarioWindow(tk.Frame):
         """
         asyncio.get_event_loop().create_task(self._mario.request_port_value(port))
     
-    def input_log_data(self, sender: mario.Mario, msg: str):
+    def input_log_data(self, sender: Mario, msg: str):
         """Function to display log messages in GUI
 
         Args:
-            sender (mario.Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
+            sender (Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
             msg (str): Log Message
         """
         assert sender == self._mario
@@ -176,11 +177,11 @@ class MarioWindow(tk.Frame):
             self.logBox['state'] = tk.DISABLED
             self.logBox.see(tk.END) # scroll down
 
-    def input_acceleration_data(self, sender: mario.Mario, x: int, y: int, z: int) -> None:
+    def input_acceleration_data(self, sender: Mario, x: int, y: int, z: int) -> None:
         """Hook for acceleration data to be displayed on GUI
 
         Args:
-            sender (mario.Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
+            sender (Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
             x (int): acceleration data in x direction
             y (int): acceleration data in y direction
             z (int): acceleration data in z direction
@@ -190,21 +191,21 @@ class MarioWindow(tk.Frame):
         self.yAccText.set(str(y))
         self.zAccText.set(str(z))
     
-    def input_pants_data(self, sender: mario.Mario, pants: str) -> None:
+    def input_pants_data(self, sender: Mario, pants: str) -> None:
         """Hook for pants data to be displayed on GUI
 
         Args:
-            sender (mario.Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
+            sender (Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
             pants (str): The type of pants mario is wearing. See LEGO_MARIO_DATA.py for more info
         """
         assert sender == self._mario
         self.pantsText.set(pants)
 
-    def input_rgb_data(self, sender: mario.Mario, color_or_tile: str) -> None:
+    def input_rgb_data(self, sender: Mario, color_or_tile: str) -> None:
         """Hook for rgb/tile data to be displayed on GUI
 
         Args:
-            sender (mario.Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
+            sender (Mario): The Mario entity that sends the data. Argument is only here for compatibility with mario's event hooks.
             color_or_tile (str): String of the color or tile. See LEGO_MARIO_DATA.py for more info
         """
         assert sender == self._mario
@@ -260,7 +261,3 @@ class MarioWindow(tk.Frame):
             if "application has been destroyed" not in e.args[0] and "invalid command name" not in e.args[0]:
                 print(e.args) # debug
 
-a = MarioWindow(mario.Mario())
-b = MarioWindow(mario.Mario())
-while asyncio.all_tasks(loop=asyncio.get_event_loop()):
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=asyncio.get_event_loop())))

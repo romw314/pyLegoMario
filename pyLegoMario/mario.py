@@ -23,7 +23,7 @@ SOFTWARE.
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parents[1]))
-from src.LEGO_MARIO_DATA import *
+from .LEGO_MARIO_DATA import *
 # if you only use scripts inside src, instead use
 # from LEGO_MARIO_DATA import *
 # if you only access mario from parent directories, use
@@ -212,8 +212,8 @@ class Mario:
         retries=0
         while self._run:
             retries+=1
-            if retries > 5:
-                self._log("Stopped after 5 attempts, disconnecting...")
+            if retries > 3:
+                self._log("Stopped after 3 attempts, disconnecting...")
                 break
             self._log("Searching for device...")
             devices = await BleakScanner.discover()
@@ -310,3 +310,7 @@ class Mario:
         except (OSError, BleakError):
                 self._log("Connection error while turning off")
                 await self.disconnect()
+
+def run():
+    while asyncio.all_tasks(loop=asyncio.get_event_loop()):
+        asyncio.get_event_loop().run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=asyncio.get_event_loop())))
