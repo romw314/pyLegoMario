@@ -29,7 +29,7 @@ from .LEGO_MARIO_DATA import *
 # if you only access mario from parent directories, use
 # from .LEGO_MARIO_DATA import *
 
-import asyncio, aioconsole
+import asyncio
 from bleak import BleakScanner, BleakClient, BleakError
 from typing import Callable, Union
 
