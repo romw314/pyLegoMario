@@ -7,7 +7,7 @@ from PIL import ImageTk, Image
 class MarioWindow(tk.Frame):
     def __init__(self, mario_entity: mario.Mario, master=None):
         self._mario = mario_entity
-        tk.Frame.__init__(self, master if tk._default_root else tk.Toplevel())
+        tk.Frame.__init__(self, tk.Toplevel() if tk._default_root else master)
         # Window Setup
         self.master.minsize(644, 165)
         self.master.iconbitmap(Path(__file__).parent / "icon.ico")
