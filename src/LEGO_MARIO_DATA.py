@@ -1,4 +1,5 @@
 # hex to ground colors
+# color messages are always shape (hexadecimal): 08004501ffffxx00 (where xx is the color code)
 HEX_TO_COLOR_TILE = {
     0x0c: "Purple", 
     0x13: "White", 
@@ -12,6 +13,7 @@ HEX_TO_COLOR_TILE = {
     0x6a: "Brown"} 
 
 # hex to Lego RGB codes
+# code messages are always shape (hexadecimal): 08004501xx00ffff (where xx is the tile code)
 HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0x02: 'Goomba',             #   2 | Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba
     0x0b: 'Lego NES',           #  11 |
