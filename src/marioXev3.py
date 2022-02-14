@@ -1,7 +1,7 @@
 import ev3_dc as ev3
 from thread_task import Sleep
 import asyncio
-from mario import Mario, create_and_connect_mario
+from mario import Mario
 
 EV3_SETTINGS = {"protocol":ev3.BLUETOOTH, "host":"00:16:53:81:D7:E2"}
 with ev3.EV3(**EV3_SETTINGS) as brick:

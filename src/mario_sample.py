@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 import asyncio
-from mario import Mario, create_and_connect_mario
+from mario import Mario
 def my_tile_hook(mario: Mario, t: str):
     """
     Test Function which will be called as soon as a tile is detected by Mario.
