@@ -57,12 +57,11 @@ if __name__ == "__main__":
     The functions in this example don't do anything. Try inserting a print call."""
     # create GUI windows
     for mario in marios:
-        MarioWindow(marios[0])
+        MarioWindow(mario)
     marios[0].AddPantsHook(my_pants_hook)
     # Change Mario's Volume (0-100)
     loop = asyncio.get_event_loop()
     loop.create_task(marios[0].set_volume(40))
     # loop.create_task(SOME COROUTINE)
-    
     
     run()
