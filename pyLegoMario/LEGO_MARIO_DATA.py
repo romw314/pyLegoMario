@@ -16,11 +16,11 @@ HEX_TO_COLOR_TILE = {
 # code messages are always shape (hexadecimal): 08004501xx00ffff (where xx is the tile code)
 HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0x02: 'Goomba',             #   2 | Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba
+    0x04: 'Whomp',              #   4 |
     0x0b: 'Lego NES',           #  11 |
     0x0d: 'Thwimp',             #  13 |
     0x0e: 'Bob-omb',            #  14 |
     0x14: 'Rotation',           #  20 |
-    0x9f: 'Pink Yoshi',         #  25 |
     0x23: 'Poison Mushroom',    #  35 |
     0x29: '?-Block',            #  41 |
     0x2e: 'Cloud',              #  46 |
@@ -35,6 +35,7 @@ HEX_TO_RGB_TILE = {             # Dec | Same Codes
     0x8b: 'Baby Penguin',       # 139 |
     0x91: 'Wrench',             # 145 |
     0x99: 'BJR',                # 153 |
+    0x9f: 'Pink Yoshi',         # 159 |
     0xa0: 'Gear',               # 160 |
     0xab: 'Seesaw',             # 171 |
     0xae: 'Boo',                # 174 |
@@ -62,6 +63,24 @@ HEX_TO_PANTS = {        # Pins
 HEX_TO_HUB_ACTIONS = {
     0x30: "Hub Will Switch Off",
     0x31: "Hub Will Disconnect"
+}
+
+HEX_TO_HUB_PROPERTIES = {
+    0x01: "Advertising Name",
+    0x02: "Button",
+    0x03: "Firmware Ver.",
+    0x04: "Hardware Ver.",
+    0x05: "Signal Strength",
+    0x06: "Battery Voltage",
+    0x07: "Battery Type",
+    0x08: "Manufacturer Name",
+    0x09: "Radio Firmware Version",
+    0x0A: "LEGO Wireless Protocol Version",
+    0x0B: "System Type ID",
+    0x0C: "H/W Network ID",
+    0x0D: "Primary MAC Address",
+    0x0E: "Secondary MAC Address",
+    0x0F: "Hardware Network Family"
 }
 
 # BLE Connection
