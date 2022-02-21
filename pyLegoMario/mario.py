@@ -37,20 +37,35 @@ from typing import Callable, Union
 class Mario:
 
     def __init__(self, doLog: bool=True, accelerometerEventHooks: Union[Callable, list]=None, tileEventHooks: Union[Callable, list]=None, pantsEventHooks: Union[Callable, list]=None, logEventHooks: Union[Callable, list]=None):
-        self._accelerometerEventHooks = []
-        self._tileEventHooks = []
-        self._pantsEventHooks = []
-        self._logEventHooks = []
+
         self._doLog = doLog
         self._run = False
         self._autoReconnect = True
         self._client = None
+
+        # values to keep most recent event in memory
+        self.pants = None
+        self.ground = None
+        self.acceleration = None
+        self.recentTile = None
+
+        self._accelerometerEventHooks = []
+        self._tileEventHooks = []
+        self._pantsEventHooks = []
+        self._logEventHooks = []
+
         self.AddAccelerometerHook(accelerometerEventHooks)
         self.AddTileHook(tileEventHooks)
         self.AddPantsHook(pantsEventHooks)
         self.AddLogHook(logEventHooks)
+
         self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks, self._tileEventHooks, self._logEventHooks)
-        asyncio.get_event_loop().create_task(self.connect())
+
+        try: # if event loop exists, use that one
+            asyncio.get_event_loop().create_task(self.connect())
+        except RuntimeError: # otherwise, create a new one
+            asyncio.set_event_loop(asyncio.SelectorEventLoop())
+            asyncio.get_event_loop().create_task(self.connect())
 
     def _signed(self, char):
         return char - 256 if char > 127 else char
@@ -138,14 +153,17 @@ class Mario:
                     hooktype.remove(funcs)
 
     def _callTileHooks(self, tile: str) -> None:
+        self.ground = tile
         for func in self._tileEventHooks:
             func(self, tile)
 
     def _callAccelerometerHooks(self, x: int, y: int, z: int) -> None:
+        self.acceleration = (x, y, z)
         for func in self._accelerometerEventHooks:
             func(self, x, y, z)
     
     def _callPantsHooks(self, powerup: str) -> None:
+        self.pants = powerup
         for func in self._pantsEventHooks:
             func(self, powerup)
 
@@ -160,12 +178,15 @@ class Mario:
                     return
                 # RGB code
                 if data[5] == 0x00:
-                    self._log("%s Tile, Hex: %s" % (HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code"), hex_data))
-                    self._callTileHooks(HEX_TO_RGB_TILE.get(data[4], "Unkown RGB Code: %s" % hex_data))
+                    tile = HEX_TO_RGB_TILE.get(data[4], "Unkown Tile Code") # decode tile
+                    self.recentTile = tile
+                    self._log("%s Tile, Hex: %s" % (tile, hex_data))
+                    self._callTileHooks(tile)
                 # Ground Colors
                 elif data[5] == 0xff:
-                    self._log("%s Ground, Hex: %s" % (HEX_TO_COLOR_TILE.get(data[6], "Unkown Color"), hex_data))
-                    self._callTileHooks(HEX_TO_COLOR_TILE.get(data[6], "Unkown Color: %s" % hex_data))
+                    color = HEX_TO_COLOR_TILE.get(data[6], "Unkown Color")
+                    self._log("%s Ground, Hex: %s" % (color, hex_data))
+                    self._callTileHooks(color)
 
             # Accelerometer data
             elif data[3] == 0x00:
@@ -192,8 +213,16 @@ class Mario:
                 binary_pants = bin(data[4])
                 self._log("%s Pants, Pants-Only Binary: %s, Hex: %s" % (pants, binary_pants, hex_data))
                 self._callPantsHooks(pants)
+            # Port 3 data - uncertain about all of it
+            elif data[3] == 0x03:
+                if data[4] == 0x13 and data[5] == 0x01:
+                    tile = HEX_TO_RGB_TILE.get(data[6], "Unkown Tile")
+                    self._log("Port 3: Jumped on %s, Hex: %s" % (tile, hex_data))
+                else:
+                    #TBD
+                    self._log("Unknown value from port 3: %s, Hex: %s" % (data[4:].hex(), hex_data))
             else:
-                self._log("Unknown port value - check Lego Wireless Protocol, Hex: %s" % hex_data)
+                self._log("Unknown value from port %s: %s, Hex: %s" % (data[3], data[4:].hex(), hex_data))
 
         # other technical messages
         elif data[2] == 0x02: # Hub Actions
@@ -204,6 +233,9 @@ class Mario:
             self._log("Port %s got %s, Hex: %s" % (data[3], "attached" if data[4] else "detached - this shouldn't happen with Mario", hex_data))
         elif data[2] == 0x47: # Port Input Format Handshake
             self._log("Port %s changed to mode %s %s notifications, Hex: %s" % (data[3], data[4], "with" if data[9] else "without", hex_data))
+        elif data[2] == 0x01 and data[4] == 0x06:
+            property = HEX_TO_HUB_PROPERTIES.get(data[3], "Unknown Property")
+            self._log("Hub Update About %s: %s, Hex: %s" % (property, data[5:].hex(), hex_data))
         else:   # Other
             self._log("Unknown message - check Lego Wireless Protocol, Hex: %s" % hex_data)
 
