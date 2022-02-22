@@ -106,20 +106,59 @@ class MarioWindow(tk.Frame):
         self.reconnectCheckBox = tk.Checkbutton(self, variable=self.reconnectVar, command=self.set_auto_reconnect, text="Auto-Reconnect")
         self.reconnectCheckBox.grid(row=2, column=2)
 
+        # Frame for port formatting
+        self.portFormatFrame = tk.Frame(self, bg="#5c94fc")
+        self.portFormatFrame.grid(row=3, column=3)
+
+        # Checkbox for notifications
+        self.notificationVar = tk.IntVar(self, value=1)
+        self.notificationCheckBox = tk.Checkbutton(self.portFormatFrame, variable=self.notificationVar, text="Notifications")
+        self.notificationCheckBox.grid(column=1, row=0)
+
+        # OptionMenu for port modes
+        self.modeVar = tk.StringVar(self)
+        options = ("0","1")
+        self.modeMenu = tk.OptionMenu(self.portFormatFrame, self.modeVar, *options)
+        self.modeMenu.config(highlightthickness=0)
+        self.modeVar.set("0")
+        self.modeMenu.grid(column=0, row=0)
+
+        # Button for configuring port format
+        self.portFormatButton = tk.Button(self.portFormatFrame, text="Update Port", command=self.set_port_input_format)
+        self.portFormatButton.grid(column=2, row=0)
+
         # Request Port Values
-        self.portVar = tk.IntVar(self, value=0)
+        self.portVar = tk.IntVar(self, value=1)
         # Frame for All Content Regarding Port Values
         self.portFrame = tk.Frame(self)
         # Button to Request Value
         self.requestPortValueButton = tk.Button(self.portFrame, text="Request Value", command=lambda: self.request_port(self.portVar.get()))
         # Radiobutton for Each Port (Grid All to portFrame)
         for port in (1,2,3,4,6): # no Port 0 because accelerometer messages aren't printed to Log, no Port 5 because it doesn't exist
-            tk.Radiobutton(self.portFrame, variable=self.portVar, value=port, text="Port %s" % port).grid(row=(port-1 )//3, column=(port-1)%3 if port!= 6 else 1)
+            tk.Radiobutton(self.portFrame, variable=self.portVar, value=port, text="Port %s" % port, command=self.updateModeMenu).grid(row=(port-1 )//3, column=(port-1)%3 if port!= 6 else 1)
         self.portFrame.grid(row=2, column=3)
         self.requestPortValueButton.grid(row=1, column=2)
 
         # display and update the window
         asyncio.get_event_loop().create_task(self.run_window())
+
+    def updateModeMenu(self):
+        """Update the mode menu for setting port format with the available port modes for each port. Called every time a different port gets selected.
+        """
+        # check which modes exist for selected port
+        new_choices = VALID_PORT_MODES[self.portVar.get()]
+        
+        # change menu accordingly
+        self.modeMenu['menu'].delete(0, tk.END)
+        for choice in new_choices:
+            self.modeMenu['menu'].add_command(label=str(choice), command=tk._setit(self.modeVar, str(choice)))
+        
+        # only reset selection if previously selected port is not valid anymore
+        if not int(self.modeVar.get()) in new_choices:
+            self.modeVar.set("0")
+
+    def set_port_input_format(self):
+        self._mario.port_setup(port=self.portVar.get(), mode=self.modeVar.get(), notifications=self.notificationVar.get())
 
     def dis_connect_mario(self):
         """Connects Mario if Mario isn't running. Disconnect Mario if Mario is connected. Passes otherwise (e.g. running but not connected yet)
@@ -235,6 +274,7 @@ class MarioWindow(tk.Frame):
                 # Mario is connected and running
                 if self._mario._client:
                     self.requestPortValueButton.config(state=tk.NORMAL)
+                    self.portFormatButton.config(state=tk.NORMAL)
                     self.turnOffButton.config(state=tk.NORMAL)
                     self.connectButton.config(text="Disconnect", state=tk.NORMAL)
                     self.volumeScale.config(state=tk.NORMAL)
@@ -242,6 +282,7 @@ class MarioWindow(tk.Frame):
                 # Mario is disconnected and not trying to connect
                 elif not self._mario._run:
                     self.requestPortValueButton.config(state=tk.DISABLED)
+                    self.portFormatButton.config(state=tk.DISABLED)
                     self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Not Connected")
                     self.connectButton.config(text="Connect", state=tk.NORMAL)
@@ -249,6 +290,7 @@ class MarioWindow(tk.Frame):
                 # Mario is running, but not connected (currently trying to connect)
                 else:
                     self.requestPortValueButton.config(state=tk.DISABLED)
+                    self.portFormatButton.config(state=tk.DISABLED)
                     self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Connecting...")
                     self.connectButton.config(state=tk.DISABLED)
