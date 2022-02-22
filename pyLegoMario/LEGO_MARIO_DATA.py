@@ -96,38 +96,60 @@ REQUEST_RGB_COMMAND = bytearray([
                                 ])
 REQUEST_PANTS_COMMAND = bytearray([0x05, 0x00, 0x21, 0x02, 0x00])
 REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
+
+
+def pifs_command(port: int, mode: int, notifications: bool = True, delta_interval: int = 1):
+    """Creates a PORT_INPUT_FORMAT_SETUP message according to the Lego Wireless Protocol: https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#port-input-format-setup-single
+
+    Args:
+    port (int): The designated Port.
+                Port 0: Accelerometer
+                Port 1: Camera
+                Port 2: Binary (Pants)
+                Port 3: ??
+                Port 4: ??
+    mode (int): The mode to set the port to. Available modes: Port 0: (0,1), Port 1: (0,1), Port 2: (0), Port 3: (0,1,2,3), Port 4: (0,1). Also see https://github.com/bricklife/LEGO-Mario-Reveng
+    notifications (bool, optional): Whether to receive updates about every new value of the port. Defaults to True. If False, you'll need to manually request port values.
+    delta_interval (int, optional): The necessary change in measured data to trigger a change in the sent value.
+                                    A higher delta interval leads to less accurate data, but also less data traffic via bluetooth.
+                                    I recommend 1 for every port except Port 0, which I recommend to set between 1 and 5 depending on your machine.
+                                    Defaults to 1.
+
+    Returns:
+        bytearray: A bytearray to be sent to Lego Mario
+    """
+    # Input Validation
+    # Port
+    if port not in (0,1,2,3,4):
+        raise ValueError("Invalid Port, expected one of (0,1,2,3,4) but got %s" % port)
+    # Mode
+    valid_modes = {0:(0,1), 1:(0,1), 2:(0,), 3:(0,1,2,3), 4:(0,1)}
+    if mode not in valid_modes[port]: # not using .get because I verified port above
+        raise ValueError("Invalid mode %s for port %s, allowed modes for this port are: %s." % (mode, port, valid_modes[port]))
+    # Delta Interval
+    try:
+        int(delta_interval)
+    except (TypeError, ValueError):
+        raise TypeError("Delta Interval must be castable to int, got %s instead" % delta_interval)
+
+    return bytearray([
+                    0x0A, # Message Length
+                    0x00, # Unused
+                    0x41, # Message Type
+                    port,
+                    mode,
+                    delta_interval,
+                    0x00,
+                    0x00,
+                    0x00,
+                    int(bool(notifications)) # Notifications en/disabled
+                    ])
+
 # Subscribtion Commands
-SUBSCRIBE_IMU_COMMAND =  bytearray([0x0A, # Length of message
-                                    0x00, # unused, always 0
-                                    0x41, # message type (41=Port Input Format Setup)
-                                    0x00, # port ID (0=accelerometer)
-                                    0x00, # mode (0=RAW)
-                                    0x04, # delta interval
-                                    0x00, # delta interval
-                                    0x00, # delta interval
-                                    0x00, # delta interval
-                                    0x01] # Enable Notifications (1=y, 0=n)
-                                    )
-SUBSCRIBE_RGB_COMMAND =  bytearray([0x0A,
-                                    0x00,
-                                    0x41,
-                                    0x01, # port ID 1=tile scanner
-                                    0x00,
-                                    0x02, # delta interval 2 is needed to recognize all colors
-                                    0x00,
-                                    0x00,
-                                    0x00,
-                                    0x01])
-SUBSCRIBE_PANTS_COMMAND = bytearray([0x0A,
-                                    0x00, 
-                                    0x41, 
-                                    0x02, # port ID 2=pants sensor
-                                    0x00, 
-                                    0x01, 
-                                    0x00, 
-                                    0x00, 
-                                    0x00, 
-                                    0x01])
+SUBSCRIBE_IMU_COMMAND =  pifs_command(0, 0, delta_interval=4)
+SUBSCRIBE_RGB_COMMAND = pifs_command(1, 0, delta_interval=1)
+SUBSCRIBE_PANTS_COMMAND = pifs_command(2, 0)
+
 MUTE_COMMAND = bytearray([
                         0x06, # message length
                         0x00, # unused, always 0
@@ -149,7 +171,7 @@ TURN_OFF_COMMAND = bytearray([
                         0x01, # specify action (01 = turn off)
                         ])
 
-BINARY_GESTURES = { # most likely wrong
+_BINARY_GESTURES = { # most likely wrong
                 0b0000000000000001: "Bump",
                 0b0000000000000010: "Gesture2",
                 0b0000000000000100: "Gesture4",
