@@ -136,7 +136,7 @@ class MarioWindow(tk.Frame):
         Args:
             placeholder (any): This argument is NOT used! It exists only for compatibility with tk.Scale's way of calling its command.
         """
-        asyncio.create_task(self._mario.set_volume(self.volumeVar.get()))
+        self._mario.set_volume(self.volumeVar.get())
     
     def set_auto_reconnect(self):
         """Sets Mario's ._autoReconnect attribute to the current value of self.reconnectVar (determined by self.reconnectCheckBox)."""
@@ -170,8 +170,8 @@ class MarioWindow(tk.Frame):
         except ValueError:
             # unable to split/format: leave message untouched
             pass
-        # Insert Message Into Log Textbox
-        if not msg.startswith("X: "):
+        # Insert Message Into Log Textbox 
+        if not msg.startswith("X: "): #and "port 3" in msg.lower()
             self.logBox['state'] = tk.NORMAL
             self.logBox.insert(tk.END, "\n%s" % msg) # insert newline for each message
             self.logBox['state'] = tk.DISABLED
@@ -260,4 +260,3 @@ class MarioWindow(tk.Frame):
             self.quit() # even in case of crash or closed window, remove Mario's event hooks
             if "application has been destroyed" not in e.args[0] and "invalid command name" not in e.args[0]:
                 print(e.args) # debug
-

@@ -194,9 +194,9 @@ class Mario:
                 if data[4:6] == data[6:]:
                     gesture = ""
                     integer_data = int.from_bytes(data[4:6], "big")
-                    for bin_gest in BINARY_GESTURES.keys():
+                    for bin_gest in _BINARY_GESTURES.keys():
                         if integer_data & bin_gest:
-                            gesture += BINARY_GESTURES[bin_gest]
+                            gesture += _BINARY_GESTURES[bin_gest]
                     self._log(gesture)
 
                 # RAW Mode
@@ -294,7 +294,7 @@ class Mario:
                 self._log("Connection error while requesting port value")
                 await self.disconnect()
 
-    async def set_volume(self, new_volume: int) -> None:
+    def set_volume(self, new_volume: int) -> None:
         """Sets mario's volume to the specified volume.
 
         Args:
@@ -303,10 +303,31 @@ class Mario:
         new_volume = min(max(new_volume, 0), 100)
         if self._client:
             try:
-                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*MUTE_COMMAND[:5], new_volume]))
+                asyncio.get_event_loop().create_task(self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, bytearray([*MUTE_COMMAND[:5], new_volume])))
             except (OSError, BleakError):
                 self._log("Connection error while setting volume")
-                await self.disconnect()
+                asyncio.get_event_loop().create_task(self.disconnect())
+
+    def port_setup(self, port: int, mode: int, notifications: bool = True) -> None:
+        """Sends a message to Mario that configures the way one of its ports communicates with the script.
+
+        Args:
+        port (int): The designated Port.
+                    Port 0: Accelerometer
+                    Port 1: Camera
+                    Port 2: Binary (Pants)
+                    Port 3: ??
+                    Port 4: ??
+        mode (int): The mode to set the port to. Available modes: Port 0: (0,1), Port 1: (0,1), Port 2: (0), Port 3: (0,1,2,3), Port 4: (0,1). Also see https://github.com/bricklife/LEGO-Mario-Reveng
+        notifications (bool, optional): Whether to receive updates about every new value of the port. Defaults to True. If False, you'll need to manually request port values.
+        """
+        if self._client:
+            try:
+                command = pifs_command(port, mode, notifications)
+                asyncio.get_event_loop().create_task(self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, command))
+            except (OSError, BleakError):
+                self._log("Connection error while setting up port")
+                asyncio.get_event_loop().create_task(self.disconnect())
 
     async def check_connection_loop(self) -> None:
         while self._client:
