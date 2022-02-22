@@ -97,6 +97,7 @@ REQUEST_RGB_COMMAND = bytearray([
 REQUEST_PANTS_COMMAND = bytearray([0x05, 0x00, 0x21, 0x02, 0x00])
 REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
 
+VALID_PORT_MODES = {0:(0,1), 1:(0,1), 2:(0,), 3:(0,1,2,3), 4:(0,), 6:(0,)}
 
 def pifs_command(port: int, mode: int, notifications: bool = True, delta_interval: int = 1):
     """Creates a PORT_INPUT_FORMAT_SETUP message according to the Lego Wireless Protocol: https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#port-input-format-setup-single
@@ -123,14 +124,18 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
     if port not in (0,1,2,3,4):
         raise ValueError("Invalid Port, expected one of (0,1,2,3,4) but got %s" % port)
     # Mode
-    valid_modes = {0:(0,1), 1:(0,1), 2:(0,), 3:(0,1,2,3), 4:(0,1)}
-    if mode not in valid_modes[port]: # not using .get because I verified port above
-        raise ValueError("Invalid mode %s for port %s, allowed modes for this port are: %s." % (mode, port, valid_modes[port]))
+    
+    try:
+        mode = int(mode)
+    except (TypeError, ValueError):
+        raise TypeError("Mode must be castable to int, got %s instead" % type(mode))
+    if mode not in VALID_PORT_MODES[port]: # not using .get because I verified port above
+        raise ValueError("Invalid mode %s for port %s, allowed modes for this port are: %s." % (mode, port, VALID_PORT_MODES[port]))
     # Delta Interval
     try:
         int(delta_interval)
     except (TypeError, ValueError):
-        raise TypeError("Delta Interval must be castable to int, got %s instead" % delta_interval)
+        raise TypeError("Delta Interval must be castable to int, got %s instead" % type(delta_interval))
 
     return bytearray([
                     0x0A, # Message Length
@@ -138,7 +143,7 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
                     0x41, # Message Type
                     port,
                     mode,
-                    delta_interval,
+                    int(delta_interval),
                     0x00,
                     0x00,
                     0x00,
