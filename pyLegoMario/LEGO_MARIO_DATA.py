@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 # hex to ground colors
 # color messages are always shape (hexadecimal): 08004501ffffxx00 (where xx is the color code)
 HEX_TO_COLOR_TILE = {
@@ -14,36 +16,8 @@ HEX_TO_COLOR_TILE = {
 
 # hex to Lego RGB codes
 # code messages are always shape (hexadecimal): 08004501xx00ffff (where xx is the tile code)
-HEX_TO_RGB_TILE = {             # Dec | Same Codes
-    0x02: 'Goomba',             #   2 | Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba
-    0x04: 'Whomp',              #   4 |
-    0x0b: 'Lego NES',           #  11 |
-    0x0d: 'Thwimp',             #  13 |
-    0x0e: 'Bob-omb',            #  14 |
-    0x14: 'Rotation',           #  20 |
-    0x23: 'Poison Mushroom',    #  35 |
-    0x29: '?-Block',            #  41 |
-    0x2e: 'Cloud',              #  46 |
-    0x30: 'Beetle',             #  48 | Para-Beetle, Mechakoopa
-    0x31: 'Moving Platform',    #  49 |
-    0x35: 'Lava Bubble',        #  51 |
-    0x37: 'Thwomp',             #  55 |
-    0x60: 'Boom Boom',          #  96 |
-    0x6a: "Peach's Castle",     # 106 |
-    0x81: 'Peeper',             # 129 |
-    0x89: 'Urchin',             # 137 | Spiny Cheep Cheep
-    0x8b: 'Baby Penguin',       # 139 |
-    0x91: 'Wrench',             # 145 |
-    0x99: 'BJR',                # 153 |
-    0x9f: 'Pink Yoshi',         # 159 |
-    0xa0: 'Gear',               # 160 |
-    0xab: 'Seesaw',             # 171 |
-    0xae: 'Boo',                # 174 |
-    0xb7: 'Flag',               # 183 |
-    0xb8: 'Start - Mario',      # 184 |
-    0xaf: 'Start - Luigi',      # 176 |
-    0xf2: 'Bully',              # 242 |
-    0xf4: 'Coin Coffer'}        # 244 |
+with open(Path(__file__).parent / Path("ALL_RGB_CODES.json")) as f:
+    HEX_TO_RGB_TILE = {x[2]:x[1] for x in json.load(f)}
 
 # hex to pants codes
 HEX_TO_PANTS = {        # Pins 

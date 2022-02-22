@@ -1,0 +1,737 @@
+[
+    [
+        "green red blue pink yellow",
+        "Goomba", 
+        2,
+        "0x2",
+        "Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba, Bullet Bill"
+    ],
+    [
+        "green red blue pink purple",
+        "Unknown",
+        3,
+        "0x3"
+    ],
+    [
+        "green red blue pink cyan",
+        "Whomp",
+        4,
+        "0x4"
+    ],
+    [
+        "green red blue pink lime",
+        "Unknown",
+        5,
+        "0x5"
+    ],
+    [
+        "green red blue yellow pink",
+        "Lego NES",
+        11,
+        "0xb"
+    ],
+    [
+        "green red blue yellow purple",
+        "Thwimp",
+        13,
+        "0xd"
+    ],
+    [
+        "green red blue yellow cyan",
+        "Bob-omb",
+        14,
+        "0xe"
+    ],
+    [
+        "green red blue yellow lime",
+        "Unknown",
+        15,
+        "0xf"
+    ],
+    [
+        "green red blue purple pink",
+        "Unknown",
+        16,
+        "0x10"
+    ],
+    [
+        "green red blue purple yellow",
+        "Unknown",
+        18,
+        "0x12"
+    ],
+    [
+        "green red blue purple cyan",
+        "Unknown",
+        19,
+        "0x13"
+    ],
+    [
+        "green red blue purple lime",
+        "Rotation",
+        20,
+        "0x14"
+    ],
+    [
+        "green red blue cyan pink",
+        "Unknown",
+        21,
+        "0x15"
+    ],
+    [
+        "green red blue cyan yellow",
+        "Unknown",
+        23,
+        "0x17"
+    ],
+    [
+        "green red blue cyan purple",
+        "Unknown",
+        24,
+        "0x18"
+    ],
+    [
+        "green red blue cyan lime",
+        "Unknown",
+        25,
+        "0x19"
+    ],
+    [
+        "green red blue lime pink",
+        "Unknown",
+        26,
+        "0x1a"
+    ],
+    [
+        "green red blue lime yellow",
+        "Unknown",
+        28,
+        "0x1c"
+    ],
+    [
+        "green red blue lime purple",
+        "Bowser",
+        29,
+        "0x1d"
+    ],
+    [
+        "green red blue lime cyan",
+        "Unknown",
+        30,
+        "0x1e"
+    ],
+    [
+        "green red pink blue yellow",
+        "Toadette",
+        32,
+        "0x20"
+    ],
+    [
+        "green red pink blue purple",
+        "Treasure #1",
+        33,
+        "0x21"
+    ],
+    [
+        "green red pink blue cyan",
+        "Unknown",
+        34,
+        "0x22"
+    ],
+    [
+        "green red pink blue lime",
+        "Poison Mushroom",
+        35,
+        "0x23"
+    ],
+    [
+        "green red pink yellow blue",
+        "?-Block",
+        41,
+        "0x29"
+    ],
+    [
+        "green red pink yellow purple",
+        "Treasure #2",
+        43,
+        "0x2b"
+    ],
+    [
+        "green red pink yellow cyan",
+        "Bridge Slide",
+        44,
+        "0x2c"
+    ],
+    [
+        "green red pink yellow lime",
+        "Unknown",
+        45,
+        "0x2d"
+    ],
+    [
+        "green red pink purple blue",
+        "Cloud",
+        46,
+        "0x2e"
+    ],
+    [
+        "green red pink purple yellow",
+        "Beetle",
+        48,
+        "0x30",
+        "Para-Beetle, Mechakoopa"
+    ],
+    [
+        "green red pink purple cyan",
+        "Moving Platform",
+        49,
+        "0x31"
+    ],
+    [
+        "green red pink purple lime",
+        "Unknown",
+        50,
+        "0x32"
+    ],
+    [
+        "green red pink cyan blue",
+        "Unknown",
+        51,
+        "0x33"
+    ],
+    [
+        "green red pink cyan yellow",
+        "Lava Bubble",
+        53,
+        "0x35"
+    ],
+    [
+        "green red pink cyan purple",
+        "Unknown",
+        54,
+        "0x36"
+    ],
+    [
+        "green red pink cyan lime",
+        "Thwomp",
+        55,
+        "0x37"
+    ],
+    [
+        "green red pink lime blue",
+        "Unknown",
+        56,
+        "0x38"
+    ],
+    [
+        "green red pink lime yellow",
+        "Unknown",
+        58,
+        "0x3a"
+    ],
+    [
+        "green red pink lime purple",
+        "Unknown",
+        59,
+        "0x3b"
+    ],
+    [
+        "green red pink lime cyan",
+        "Toad",
+        60,
+        "0x3c"
+    ],
+    [
+        "green red yellow blue pink",
+        "POW",
+        91,
+        "0x5b"
+    ],
+    [
+        "green red yellow blue purple",
+        "Unknown",
+        93,
+        "0x5d"
+    ],
+    [
+        "green red yellow blue cyan",
+        "Unknown",
+        94,
+        "0x5e"
+    ],
+    [
+        "green red yellow blue lime",
+        "P-Switch",
+        95,
+        "0x5f"
+    ],
+    [
+        "green red yellow pink blue",
+        "Boom Boom",
+        96,
+        "0x60"
+    ],
+    [
+        "green red yellow pink purple",
+        "Unknown",
+        98,
+        "0x62"
+    ],
+    [
+        "green red yellow pink cyan",
+        "Super Mushroom",
+        99,
+        "0x63"
+    ],
+    [
+        "green red yellow pink lime",
+        "Unknown",
+        100,
+        "0x64"
+    ],
+    [
+        "green red yellow purple blue",
+        "Peach's Castle",
+        106,
+        "0x6a"
+    ],
+    [
+        "green red yellow purple pink",
+        "Stone Eye",
+        107,
+        "0x6b"
+    ],
+    [
+        "green red yellow purple cyan",
+        "Unknown",
+        109,
+        "0x6d"
+    ],
+    [
+        "green red yellow purple lime",
+        "Unknown",
+        110,
+        "0x6e"
+    ],
+    [
+        "green red yellow cyan blue",
+        "Unknown",
+        111,
+        "0x6f"
+    ],
+    [
+        "green red yellow cyan pink",
+        "Unknown",
+        112,
+        "0x70"
+    ],
+    [
+        "green red yellow cyan purple",
+        "Unknown",
+        114,
+        "0x72"
+    ],
+    [
+        "green red yellow cyan lime",
+        "Unknown",
+        115,
+        "0x73"
+    ],
+    [
+        "green red yellow lime blue",
+        "Unknown",
+        116,
+        "0x74"
+    ],
+    [
+        "green red yellow lime pink",
+        "Unknown",
+        117,
+        "0x75"
+    ],
+    [
+        "green red yellow lime purple",
+        "Unknown",
+        119,
+        "0x77"
+    ],
+    [
+        "green red yellow lime cyan",
+        "Unknown",
+        120,
+        "0x78"
+    ],
+    [
+        "green red purple blue pink",
+        "Unknown",
+        121,
+        "0x79"
+    ],
+    [
+        "green red purple blue yellow",
+        "Star",
+        123,
+        "0x7b"
+    ],
+    [
+        "green red purple blue cyan",
+        "Unknown",
+        124,
+        "0x7c"
+    ],
+    [
+        "green red purple blue lime",
+        "Unknown",
+        125,
+        "0x7d"
+    ],
+    [
+        "green red purple pink blue",
+        "Unknown",
+        126,
+        "0x7e"
+    ],
+    [
+        "green red purple pink yellow",
+        "Trasure #3",
+        128,
+        "0x80"
+    ],
+    [
+        "green red purple pink cyan",
+        "Peeper",
+        129,
+        "0x81"
+    ],
+    [
+        "green red purple pink lime",
+        "Unknown",
+        130,
+        "0x82"
+    ],
+    [
+        "green red purple yellow blue",
+        "King Boo",
+        136,
+        "0x88"
+    ],
+    [
+        "green red purple yellow pink",
+        "Urchin",
+        137,
+        "0x89",
+        "Spiny Cheep Cheep"
+    ],
+    [
+        "green red purple yellow cyan",
+        "Baby Penguin",
+        139,
+        "0x8b"
+    ],
+    [
+        "green red purple yellow lime",
+        "Unknown",
+        140,
+        "0x8c"
+    ],
+    [
+        "green red purple cyan blue",
+        "Unknown",
+        141,
+        "0x8d"
+    ],
+    [
+        "green red purple cyan pink",
+        "Unknown",
+        142,
+        "0x8e"
+    ],
+    [
+        "green red purple cyan yellow",
+        "Unknown",
+        144,
+        "0x90"
+    ],
+    [
+        "green red purple cyan lime",
+        "Wrench",
+        145,
+        "0x91"
+    ],
+    [
+        "green red purple lime blue",
+        "Unknown",
+        146,
+        "0x92"
+    ],
+    [
+        "green red purple lime pink",
+        "Unknown",
+        147,
+        "0x93"
+    ],
+    [
+        "green red purple lime yellow",
+        "Unknown",
+        149,
+        "0x95"
+    ],
+    [
+        "green red purple lime cyan",
+        "Unknown",
+        150,
+        "0x96"
+    ],
+    [
+        "green red cyan blue pink",
+        "Unknown",
+        151,
+        "0x97"
+    ],
+    [
+        "green red cyan blue yellow",
+        "BJR",
+        153,
+        "0x99"
+    ],
+    [
+        "green red cyan blue purple",
+        "Unknown",
+        154,
+        "0x9a"
+    ],
+    [
+        "green red cyan blue lime",
+        "Unknown",
+        155,
+        "0x9b"
+    ],
+    [
+        "green red cyan pink blue",
+        "Unknown",
+        156,
+        "0x9c"
+    ],
+    [
+        "green red cyan pink yellow",
+        "Unknown",
+        158,
+        "0x9e"
+    ],
+    [
+        "green red cyan pink purple",
+        "Pink Yoshi",
+        159,
+        "0x9f"
+    ],
+    [
+        "green red cyan pink lime",
+        "Gear",
+        160,
+        "0xa0"
+    ],
+    [
+        "green red cyan yellow blue",
+        "Unknown",
+        166,
+        "0xa6"
+    ],
+    [
+        "green red cyan yellow pink",
+        "Unknown",
+        167,
+        "0xa7"
+    ],
+    [
+        "green red cyan yellow purple",
+        "Unknown",
+        169,
+        "0xa9"
+    ],
+    [
+        "green red cyan yellow lime",
+        "Unknown",
+        170,
+        "0xaa"
+    ],
+    [
+        "green red cyan purple blue",
+        "Seesaw",
+        171,
+        "0xab"
+    ],
+    [
+        "green red cyan purple pink",
+        "Unknown",
+        172,
+        "0xac"
+    ],
+    [
+        "green red cyan purple yellow",
+        "Boo",
+        174,
+        "0xae"
+    ],
+    [
+        "green red cyan purple lime",
+        "Start - Luigi",
+        175,
+        "0xaf"
+    ],
+    [
+        "green red cyan lime blue",
+        "Unknown",
+        176,
+        "0xb0"
+    ],
+    [
+        "green red cyan lime pink",
+        "Unknown",
+        177,
+        "0xb1"
+    ],
+    [
+        "green red cyan lime yellow",
+        "Unknown",
+        179,
+        "0xb3"
+    ],
+    [
+        "green red cyan lime purple",
+        "Unknown",
+        180,
+        "0xb4"
+    ],
+    [
+        "green red lime blue pink",
+        "Unknown",
+        181,
+        "0xb5"
+    ],
+    [
+        "green red lime blue yellow",
+        "Flag",
+        183,
+        "0xb7"
+    ],
+    [
+        "green red lime blue purple",
+        "Start - Mario",
+        184,
+        "0xb8"
+    ],
+    [
+        "green red lime blue cyan",
+        "Unknown",
+        185,
+        "0xb9"
+    ],
+    [
+        "green red lime pink blue",
+        "Unknown",
+        186,
+        "0xba"
+    ],
+    [
+        "green red lime pink yellow",
+        "Unknown",
+        188,
+        "0xbc"
+    ],
+    [
+        "green red lime pink purple",
+        "Unknown",
+        189,
+        "0xbd"
+    ],
+    [
+        "green red lime pink cyan",
+        "Unknown",
+        190,
+        "0xbe"
+    ],
+    [
+        "green red lime yellow blue",
+        "Unknown",
+        196,
+        "0xc4"
+    ],
+    [
+        "green red lime yellow pink",
+        "Unknown",
+        197,
+        "0xc5"
+    ],
+    [
+        "green red lime yellow purple",
+        "Unknown",
+        199,
+        "0xc7"
+    ],
+    [
+        "green red lime yellow cyan",
+        "Unknown",
+        200,
+        "0xc8"
+    ],
+    [
+        "green red lime purple blue",
+        "Unknown",
+        201,
+        "0xc9"
+    ],
+    [
+        "green red lime purple pink",
+        "Unknown",
+        202,
+        "0xca"
+    ],
+    [
+        "green red lime purple yellow",
+        "Unknown",
+        204,
+        "0xcc"
+    ],
+    [
+        "green red lime purple cyan",
+        "Unknown",
+        205,
+        "0xcd"
+    ],
+    [
+        "green red lime cyan blue",
+        "Unknown",
+        206,
+        "0xce"
+    ],
+    [
+        "green red lime cyan pink",
+        "Unknown",
+        207,
+        "0xcf"
+    ],
+    [
+        "green red lime cyan yellow",
+        "Unknown",
+        209,
+        "0xd1"
+    ],
+    [
+        "green red lime cyan purple",
+        "Unknown",
+        210,
+        "0xd2"
+    ],
+    [
+        "blue red pink yellow green",
+        "Bully",
+        242,
+        "0xf2"
+    ],
+    [
+        "blue red pink cyan green", 
+        "Coin Coffer", 
+        244,
+        "0xf4"
+    ]
+]
