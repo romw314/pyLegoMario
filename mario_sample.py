@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import asyncio
 from pyLegoMario import Mario, MarioWindow, run
 
 def my_tile_hook(mario: Mario, t: str):
@@ -59,8 +58,6 @@ if __name__ == "__main__":
     for mario in marios:
         MarioWindow(mario)
     marios[0].AddPantsHook(my_pants_hook)
-    # Change Mario's Volume (0-100)
-    marios[0].set_volume(40)
     # loop.create_task(SOME COROUTINE)
     
     run()

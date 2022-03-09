@@ -178,25 +178,25 @@ class Mario:
                     return
                 # RGB code
                 if data[5] == 0x00:
-                    tile = HEX_TO_RGB_TILE.get(data[4], "Unkown Tile Code") # decode tile
+                    tile = HEX_TO_RGB_TILE.get(data[4], "Unkown Tile Code: %s" % hex(data[4])) # decode tile
                     self.recentTile = tile
                     self._log("%s Tile, Hex: %s" % (tile, hex_data))
                     self._callTileHooks(tile)
                 # Ground Colors
                 elif data[5] == 0xff:
-                    color = HEX_TO_COLOR_TILE.get(data[6], "Unkown Color")
+                    color = HEX_TO_COLOR_TILE.get(data[6], "Unkown Color: %s" % hex(data[6]))
                     self._log("%s Ground, Hex: %s" % (color, hex_data))
                     self._callTileHooks(color)
 
             # Accelerometer data
             elif data[3] == 0x00:
-                # Gesture Mode
+                # Gesture Mode - experimental, likely not accurate
                 if data[4:6] == data[6:]:
                     gesture = ""
                     integer_data = int.from_bytes(data[4:6], "big")
-                    for bin_gest in _BINARY_GESTURES.keys():
+                    for bin_gest in BINARY_GESTURES.keys():
                         if integer_data & bin_gest:
-                            gesture += _BINARY_GESTURES[bin_gest]
+                            gesture += BINARY_GESTURES[bin_gest]
                     self._log(gesture)
 
                 # RAW Mode
@@ -351,7 +351,7 @@ class Mario:
             self._log("Connection error while disconnecting")
             self._client = None
         if self._autoReconnect:
-            await self.connect()
+            asyncio.get_event_loop().create_task(self.connect())
         else:
             self._run = False
 

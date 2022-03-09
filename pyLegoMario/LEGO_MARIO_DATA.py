@@ -150,7 +150,7 @@ TURN_OFF_COMMAND = bytearray([
                         0x01, # specify action (01 = turn off)
                         ])
 
-_BINARY_GESTURES = { # most likely wrong
+BINARY_GESTURES = { # most likely wrong
                 0b0000000000000001: "Bump",
                 0b0000000000000010: "Gesture2",
                 0b0000000000000100: "Gesture4",
