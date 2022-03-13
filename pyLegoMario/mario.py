@@ -36,12 +36,20 @@ from typing import Callable, Union
 
 class Mario:
 
-    def __init__(self, doLog: bool=True, accelerometerEventHooks: Union[Callable, list]=None, tileEventHooks: Union[Callable, list]=None, pantsEventHooks: Union[Callable, list]=None, logEventHooks: Union[Callable, list]=None):
+    def __init__(self, 
+                doLog: bool=True, 
+                accelerometerEventHooks: Union[Callable, list]=None,
+                tileEventHooks: Union[Callable, list]=None, 
+                pantsEventHooks: Union[Callable, list]=None, 
+                logEventHooks: Union[Callable, list]=None,
+                defaultVolume: Union[int, None]=None
+                ):
 
-        self._doLog = doLog
+        self._doLog = doLog # output logs to stdout only if True
         self._run = False
-        self._autoReconnect = True
-        self._client = None
+        self._autoReconnect = True  # if True, will try to reconnect as soon as disconnected
+        self._client = None # bleak client
+        self.defaultVolume = defaultVolume # volume to set Mario to after every connection. Default None won't change volume.
 
         # values to keep most recent event in memory
         self.pants = None
@@ -256,6 +264,8 @@ class Mario:
                         await client.connect()
                         self._client = client
                         self._log("Mario Connected: %s" % client.address)
+
+                        # subscribe to events
                         await client.start_notify(LEGO_CHARACTERISTIC_UUID, self._handle_events)
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND)
@@ -263,8 +273,12 @@ class Mario:
                         await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_RGB_COMMAND)
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_PANTS_COMMAND)
-                        client.is_connected
-                        asyncio.get_event_loop().create_task(self.check_connection_loop())
+
+                        client.is_connected # wait for connection
+                        asyncio.get_event_loop().create_task(self.check_connection_loop()) # start loop to keep checking connection
+                        
+                        if not self.defaultVolume is None: # change volume to provided default
+                            self.set_volume(self.defaultVolume)
                         return True
                     except: # any error during communication
                         self._log("Error connecting")
