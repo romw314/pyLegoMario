@@ -131,3 +131,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 investigating port3.txt
+mario_soundboard_files/
+messing around.py
