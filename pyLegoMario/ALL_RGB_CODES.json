@@ -4,7 +4,7 @@
         "Goomba", 
         2,
         "0x2",
-        "Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba, Bullet Bill"
+        "Fly Guy, Foo, Ant Trooper, Ninji, Para-Goomba, Goombrat, Bone Goomba, Bullet Bill, Swoop, Scuttlebug"
     ],
     [
         "green red blue pink purple",
@@ -74,7 +74,7 @@
     ],
     [
         "green red blue cyan pink",
-        "Unknown",
+        "Time Block",
         21,
         "0x15"
     ],
@@ -309,13 +309,13 @@
     ],
     [
         "green red yellow purple lime",
-        "Unknown",
+        "Pokey",
         110,
         "0x6e"
     ],
     [
         "green red yellow cyan blue",
-        "Unknown",
+        "Sliding Platform",
         111,
         "0x6f"
     ],
@@ -387,7 +387,7 @@
     ],
     [
         "green red purple pink blue",
-        "Unknown",
+        "Piranha Plant",
         126,
         "0x7e"
     ],
@@ -417,10 +417,10 @@
     ],
     [
         "green red purple yellow pink",
-        "Urchin",
+        "Cheep Cheep",
         137,
         "0x89",
-        "Spiny Cheep Cheep"
+        "Urchin, Spiny Cheep Cheep, Torpedo Ted"
     ],
     [
         "green red purple yellow cyan",
@@ -460,7 +460,7 @@
     ],
     [
         "green red purple lime blue",
-        "Unknown",
+        "Amp",
         146,
         "0x92"
     ],
