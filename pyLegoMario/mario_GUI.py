@@ -175,7 +175,8 @@ class MarioWindow(tk.Frame):
         Args:
             placeholder (any): This argument is NOT used! It exists only for compatibility with tk.Scale's way of calling its command.
         """
-        self._mario.set_volume(self.volumeVar.get())
+        self._mario.defaultVolume = self.volumeVar.get()
+        self._mario.set_volume(self._mario.defaultVolume)
     
     def set_auto_reconnect(self):
         """Sets Mario's ._autoReconnect attribute to the current value of self.reconnectVar (determined by self.reconnectCheckBox)."""
@@ -277,7 +278,6 @@ class MarioWindow(tk.Frame):
                     self.portFormatButton.config(state=tk.NORMAL)
                     self.turnOffButton.config(state=tk.NORMAL)
                     self.connectButton.config(text="Disconnect", state=tk.NORMAL)
-                    self.volumeScale.config(state=tk.NORMAL)
                     self.master.title("Lego Mario - %s" % self._mario._client.address)
                 # Mario is disconnected and not trying to connect
                 elif not self._mario._run:
@@ -286,7 +286,6 @@ class MarioWindow(tk.Frame):
                     self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Not Connected")
                     self.connectButton.config(text="Connect", state=tk.NORMAL)
-                    self.volumeScale.config(state=tk.DISABLED)
                 # Mario is running, but not connected (currently trying to connect)
                 else:
                     self.requestPortValueButton.config(state=tk.DISABLED)
@@ -294,7 +293,6 @@ class MarioWindow(tk.Frame):
                     self.turnOffButton.config(state=tk.DISABLED)
                     self.master.title("Lego Mario - Connecting...")
                     self.connectButton.config(state=tk.DISABLED)
-                    self.volumeScale.config(state=tk.DISABLED)
                 # tkinter's update function
                 self.update()
                 await asyncio.sleep(interval)
