@@ -73,7 +73,10 @@ class MarioWindow(tk.Frame):
 
         # Scale for Adjusting Volume
         self.volumeFrame = tk.Frame(self, bg="#5c94fc")
-        self.volumeVar = tk.IntVar(value=100)
+        if self._mario.defaultVolume == None:
+            self.volumeVar = tk.IntVar(value=100)
+        else:
+            self.volumeVar = tk.IntVar(value=self._mario.defaultVolume)
         self.volumeScale = tk.Scale(self.volumeFrame, variable=self.volumeVar, from_=0, to=100, orient=tk.HORIZONTAL, command=self.set_mario_volume, label="Volume", highlightthickness=0)
         self.volumeFrame.grid(row=0, column=3) # Grid Frame on Mainframe
         self.volumeScale.grid(row=0, column=0) # Grid Scale on volumeFrame
