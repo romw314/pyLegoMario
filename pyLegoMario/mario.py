@@ -44,6 +44,26 @@ class Mario:
                 logEventHooks: Union[Callable, list]=None,
                 defaultVolume: Union[int, None]=None
                 ):
+        """Object to connect and control a single Lego Mario or Luigi.
+
+        Args:
+            doLog (bool, optional): Enables Logs to Stdout. Defaults to True.
+
+            accelerometerEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new accelerometer data is received. 
+                Functions need to take four inputs (sender: Mario, x: int, y: int, z: int). Defaults to None.
+
+            tileEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new camera data is received. 
+                Functions need to take two inputs: (sender: Mario, ground: str). Defaults to None.
+
+            pantsEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new pants data is received. 
+                Functions need to take two inputs: (sender: Mario, pants: str). Defaults to None.
+
+            logEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time something gets logged. 
+                Functions need to take two inputs: (sender: Mario, msg: str). Defaults to None.
+                
+            defaultVolume (Union[int, None], optional): Volume (0-100) that should be set every time Mario reconnects. 
+                If not provided, will not adjust volume. Defaults to None.
+        """
 
         self._doLog = doLog # output logs to stdout only if True
         self._run = False
