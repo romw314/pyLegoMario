@@ -25,64 +25,88 @@ SOFTWARE.
 import asyncio
 import vgamepad as vg
 from pyLegoMario import *
+from typing import Union, Callable
+
+LARGE = 65
+def acc_to_float(number: int) -> float:
+    """Converts acceleration values from tilting Lego Mario to a sensible float -1 < x < 1 to then input into control stick.
+
+    Args:
+        number (int): Lego Mario's accelerometer's output in one direction. -255 < x <255
+
+    Returns:
+        float: float to input into VX360Gamepad.left_joystick_float.
+    """
+    return min(max(number/18, -1), 1)
 
 
-def my_tile_hook(mario: Mario, t: str):
+
+class MarioController(Mario):
+    def __init__(self,
+                doLog: bool = True, 
+                accelerometerEventHooks: Union[Callable, list] = None, 
+                tileEventHooks: Union[Callable, list] = None, 
+                pantsEventHooks: Union[Callable, list] = None, 
+                logEventHooks: Union[Callable, list] = None, 
+                defaultVolume: Union[int, None] = None):
+        
+        super().__init__(doLog, accelerometerEventHooks, tileEventHooks, pantsEventHooks, logEventHooks, defaultVolume)
+        self.AddAccelerometerHook(accHandling)
+        self.AddTileHook(rgbHandling)
+        self.gamepad = vg.VX360Gamepad()
+        self.y_cache=[] # cache of length 5 to store recent y accelerations
+
+def rgbHandling(sender: MarioController, t: str) -> None:
     """
     Test Function which will be called as soon as a tile is detected by Mario.
     t will contain the Name of the tile that was deteced.
     """
-    if t == "Baby Penguin":
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
-        
+    if "Start" in t: # accept both "Start - Mario" and "Start - Luigi"
+        sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
     else:
-        gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
-    gamepad.update()
+        sender.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
+    sender.gamepad.update()
 
-def acc_to_float(number: int) -> float:
-    return min(max(number/22, -1), 1)
-
-LARGE = 65
-def my_accelerometer_hook(mario: Mario, x: int, y: int, z: int):
+def accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
     """
     Test Function which will be called for every change in x, y or z accelerometer value.
     """
     # jumping and movement handling
-    if y > LARGE and not "large" in mario.y_cache:
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
+    if y > LARGE and not "large" in sender.y_cache:
+        sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
     # keep a down for big jump
-    elif "very large" in mario.y_cache:
-        gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
+    elif "very large" in sender.y_cache:
+        sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
         # z (ground pound/longjump)
     elif y < -60:
-        if not "large" in mario.y_cache:
-            gamepad.left_trigger_float(1)
+        if not "large" in sender.y_cache:
+            sender.gamepad.left_trigger_float(1)
     else:
         # only adjust joystick if not jumping to avoid shaky inputs
-        gamepad.left_joystick_float(acc_to_float(x), -acc_to_float(z))
+        sender.gamepad.left_joystick_float(acc_to_float(x), -acc_to_float(z))
         # reset buttons
-        gamepad.left_trigger_float(0)
-        gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
+        sender.gamepad.left_trigger_float(0)
+        sender.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
     
     # b button handling
-    if abs(z) > 100:
-        gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
+    if abs(z) > 107:
+        sender.gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
     else:
-        gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
+        sender.gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
 
-    # input moves into gamepad
-    gamepad.update()
+    # input moves into sender.gamepad
+    sender.gamepad.update()
 
     # write cache
     if abs(y) > 120:
-        mario.y_cache.insert(0, "very large")
+        sender.y_cache.insert(0, "very large")
     elif abs(y) > LARGE:
-        mario.y_cache.insert(0, "large")
+        sender.y_cache.insert(0, "large")
     else:
-        mario.y_cache.insert(0, "small")
-    mario.y_cache = mario.y_cache[:5]
+        sender.y_cache.insert(0, "small")
+    sender.y_cache = sender.y_cache[:5]
 
-def my_pants_hook(mario: Mario, powerup: str):
+def my_pants_hook(sender: MarioController, powerup: str) -> None:
     """Test function which will be called for every time mario changes pants.
 
     Args:
@@ -92,10 +116,9 @@ def my_pants_hook(mario: Mario, powerup: str):
 
 
 if __name__ == "__main__":
-    gamepad = vg.VX360Gamepad()
     # Initialize Marios
     print("Turn on Mario and press Bluetooth Button")
-    mario = Mario(True, my_accelerometer_hook, my_tile_hook, my_pants_hook, defaultVolume=0)
-    mario.y_cache=[]
-    MarioWindow(mario)
+    controller = MarioController(False, defaultVolume=0)
+    
+    #MarioWindow(controller)
     run()
