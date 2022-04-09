@@ -42,15 +42,17 @@ def acc_to_float(number: int) -> float:
 
 
 class MarioController(Mario):
-    def __init__(self,
-                doLog: bool = True, 
-                accelerometerEventHooks: Union[Callable, list] = None, 
-                tileEventHooks: Union[Callable, list] = None, 
-                pantsEventHooks: Union[Callable, list] = None, 
-                logEventHooks: Union[Callable, list] = None, 
-                defaultVolume: Union[int, None] = None):
-        
-        super().__init__(doLog, accelerometerEventHooks, tileEventHooks, pantsEventHooks, logEventHooks, defaultVolume)
+    def __init__(self, 
+                doLog: bool=True, 
+                accelerometerEventHooks: Union[Callable, list]=None,
+                tileEventHooks: Union[Callable, list]=None, 
+                pantsEventHooks: Union[Callable, list]=None, 
+                logEventHooks: Union[Callable, list]=None,
+                defaultVolume: Union[int, None]=None
+                ) -> None:
+
+        super().__init__(doLog, accelerometerEventHooks, tileEventHooks,
+                        pantsEventHooks, logEventHooks, defaultVolume)
         self.AddAccelerometerHook(accHandling)
         self.AddTileHook(rgbHandling)
         self.gamepad = vg.VX360Gamepad()
@@ -105,14 +107,6 @@ def accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
     else:
         sender.y_cache.insert(0, "small")
     sender.y_cache = sender.y_cache[:5]
-
-def my_pants_hook(sender: MarioController, powerup: str) -> None:
-    """Test function which will be called for every time mario changes pants.
-
-    Args:
-        powerup (str): The powerup Mario turns into
-    """
-    pass
 
 
 if __name__ == "__main__":
