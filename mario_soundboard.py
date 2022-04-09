@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import json, os, asyncio, random
+import json, os, asyncio, random, sys
 from typing import Callable, Union
 from pyLegoMario import *
 from pathlib import Path
@@ -165,7 +165,9 @@ def tile_hook_factory(
     return play_tile_sound
 
 if __name__ == "__main__":
-    DIR_PATH = Path(__file__).parent / "mario_soundboard_files"
+    DIR_PATH = Path(sys.argv[0]).parent / "mario_soundboard_files"
+    if not os.path.isdir(DIR_PATH):
+        os.mkdir(DIR_PATH)
     # Initialize Mario
     mario = Mario(True, defaultVolume=0)
     MarioWindow(mario)
