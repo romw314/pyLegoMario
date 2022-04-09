@@ -48,16 +48,19 @@ def my_pants_hook(mario: Mario, powerup: str):
 
 
 if __name__ == "__main__":
-    NUM_PLAYERS = 1
     # Initialize Marios
-    marios = [Mario(doLog = True, accelerometerEventHooks = my_accelerometer_hook, tileEventHooks = my_tile_hook) for player in range(NUM_PLAYERS)]
+    mario = Mario(
+        doLog=True, 
+        accelerometerEventHooks=my_accelerometer_hook, 
+        tileEventHooks=my_tile_hook)
     """Add Event Hooks in constructor (above) or manually (below).
-    Event hooks are functions that are called every time Mario sends data of a certain kind.
-    The functions in this example don't do anything. Try inserting a print call."""
-    # create GUI windows
-    for mario in marios:
-        MarioWindow(mario)
-    marios[0].AddPantsHook(my_pants_hook)
-    # loop.create_task(SOME COROUTINE)
+    Event hooks are functions to be called every time Mario 
+    sends data of a certain kind.
+    The functions in this example don't do anything. 
+    Try inserting a print call."""
+    # create GUI window
+    MarioWindow(mario)
+    mario.AddPantsHook(my_pants_hook)
+    #loop.create_task(SOME COROUTINE)
     
     run()
