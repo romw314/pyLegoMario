@@ -46,7 +46,7 @@ async def register_sounds(
         dict[str, str]: A mapping of tile names to sound file or directory names.
     """
     settings = load_settings()
-    saved_mappings = settings["sound_mappings"]
+    saved_mappings = settings.get("sound_mappings", {})
     
     tile_mapping = {} # tile_name : sound_name
     for tile_name, sound_name in saved_mappings.items():
@@ -69,7 +69,11 @@ async def register_sounds(
             # Add event hook that registers sound
             def register_sound_id(sender: Mario, t: str):
                 # only tiles & no already registered tiles
-                if t in HEX_TO_RGB_TILE.values() and t not in tile_mapping.keys():
+                if t in tile_mapping.keys():
+                    mario._log(
+                        f"{t} is already registered to {tile_mapping[t]}"
+                        )
+                elif t in HEX_TO_RGB_TILE.values():
                     tile_mapping[t] = sound_name
                     # remove event hook as soon as tile was registered
                     sender.RemoveEventsHook(register_sound_id)
