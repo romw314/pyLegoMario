@@ -19,16 +19,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-# only needed if you use scripts both in src and in parent directories
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parents[1]))
-from .LEGO_MARIO_DATA import *
-# if you only use scripts inside src, instead use
-# from LEGO_MARIO_DATA import *
-# if you only access mario from parent directories, use
-# from .LEGO_MARIO_DATA import *
 
+from .LEGO_MARIO_DATA import *
 import asyncio
 from bleak import BleakScanner, BleakClient, BleakError
 from typing import Any, Callable, Iterable, Union
@@ -38,10 +30,22 @@ class Mario:
 
     def __init__(self, 
                 doLog: bool=True, 
-                accelerometerEventHooks: Union[Callable, list]=None,
-                tileEventHooks: Union[Callable, list]=None, 
-                pantsEventHooks: Union[Callable, list]=None, 
-                logEventHooks: Union[Callable, list]=None,
+                accelerometerEventHooks: Union[
+                    Callable[["Mario", int, int, int], Any], 
+                    Iterable[Callable[["Mario", int, int, int], Any]]
+                    ]=None,
+                tileEventHooks: Union[
+                    Callable[["Mario", str], Any], 
+                    Iterable[Callable[["Mario", str], Any]]
+                    ]=None, 
+                pantsEventHooks: Union[
+                    Callable[["Mario", str], Any], 
+                    Iterable[Callable[["Mario", str], Any]]
+                    ]=None, 
+                logEventHooks: Union[
+                    Callable[["Mario", str], Any], 
+                    Iterable[Callable[["Mario", str], Any]]
+                    ]=None,
                 defaultVolume: Union[int, None]=None
                 ) -> None:
         """Object to connect and control a single Lego Mario or Luigi.
@@ -77,27 +81,27 @@ class Mario:
         self.acceleration: tuple[int, int, int] = None
         self.recentTile: str = None
 
-        self._accelerometerEventHooks: list[Callable[[Mario, int, int, int], Any]] = []
+        self._accelerometerEventHooks: list[
+                                        Callable[
+                                            [Mario, int, int, int],
+                                            Any]
+                                        ] = []
         self._tileEventHooks: list[Callable[[Mario, str], Any]] = []
         self._pantsEventHooks: list[Callable[[Mario, str], Any]] = []
         self._logEventHooks: list[Callable[[Mario, str], Any]] = []
+        self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks,
+                        self._tileEventHooks, self._logEventHooks)
 
         self.AddAccelerometerHook(accelerometerEventHooks)
         self.AddTileHook(tileEventHooks)
         self.AddPantsHook(pantsEventHooks)
         self.AddLogHook(logEventHooks)
 
-        self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks,
-                        self._tileEventHooks, self._logEventHooks)
-
         try: # if event loop exists, use that one
             asyncio.get_event_loop().create_task(self.connect())
         except RuntimeError: # otherwise, create a new one
             asyncio.set_event_loop(asyncio.SelectorEventLoop())
             asyncio.get_event_loop().create_task(self.connect())
-
-    def _signed(self, char):
-        return char - 256 if char > 127 else char
 
     def _log(self, msg, end="\n"):
         """Log any message to stdout and call all assigned LogEvent handlers.
@@ -110,7 +114,7 @@ class Mario:
             func(self, msg)
         if self._doLog:
             address = "Not Connected" if not self._client else self._client.address
-            print(("\r%s: %s" % (address, msg)).ljust(100), end=end)
+            print((f"\r{address}: {msg}").ljust(100), end=end)
 
     def AddLogHook(
         self, 
@@ -123,12 +127,11 @@ class Mario:
         Args:
             funcs (function or list of functions): function or list of functions that take (Mario, str) as input.
         """
-        if hasattr(funcs, '__iter__'):
-            for function in funcs:
-                if callable(function):
-                    self._logEventHooks.append(function)
-        elif callable(funcs):
+        if callable(funcs):
             self._logEventHooks.append(funcs)
+        elif hasattr(funcs, '__iter__'):
+            for hook_function in funcs:
+                self.AddLogHook(hook_function)
 
     def AddTileHook(
         self, 
@@ -139,14 +142,13 @@ class Mario:
         """Adds function(s) as event hooks for updated tile or color values.
 
         Args:
-            funcs (function or list of functions): function or list of functions that take (Mario, str) as input.
+            funcs (Union[Callable[["Mario", str], Any], Iterable[Callable[["Mario", str], Any]]]): function or list of functions that take (Mario, str) as input.
         """
-        if hasattr(funcs, '__iter__'):
-            for function in funcs:
-                if callable(function):
-                    self._tileEventHooks.append(function)
-        elif callable(funcs):
+        if callable(funcs):
             self._tileEventHooks.append(funcs)
+        elif hasattr(funcs, '__iter__'):
+            for hook_function in funcs:
+                self.AddTileHook(hook_function)
 
     def AddAccelerometerHook(
         self, 
@@ -159,14 +161,11 @@ class Mario:
         Args:
             funcs (function or list of functions): function or list of functions that take (Mario, int, int, int) as input.
         """
-        if hasattr(funcs, '__iter__'):
-            for function in funcs:
-                if callable(function):
-                    self._accelerometerEventHooks.append(function)
-                else:
-                    self._log(f"Expected callable but received {type(function)} as event hook. Not registering")
-        elif callable(funcs):
+        if callable(funcs):
             self._accelerometerEventHooks.append(funcs)
+        elif hasattr(funcs, '__iter__'):
+            for hook_function in funcs:
+                self.AddAccelerometerHook(hook_function)
 
     def AddPantsHook(
         self, 
@@ -179,14 +178,12 @@ class Mario:
         Args:
             funcs (function or list of functions): function or list of functions that take a Mario object and a single string as input.
         """
-        if hasattr(funcs, '__iter__'):
-            for function in funcs:
-                if callable(function):
-                    self._pantsEventHooks.append(function)
-                else:
-                    self._log(f"Expected callable but received {type(function)} as event hook. Not registering")
-        elif callable(funcs):
+        if callable(funcs):
             self._pantsEventHooks.append(funcs)
+        elif hasattr(funcs, '__iter__'):
+            for hook_function in funcs:
+                self.AddPantsHook(hook_function)
+        
         
     def RemoveEventsHook(
         self,
@@ -202,16 +199,14 @@ class Mario:
             funcs (Union[ Callable[[Any], Any], Iterable[Callable[[Any], Any]]]):
                 callable or iterable of callable.
         """
-        
-        if hasattr(funcs, '__iter__'):
-            for hooktype in self.ALLHOOKS:
-                for function in funcs:
-                    if callable(function) and function in hooktype:
-                        hooktype.remove(function)
-        elif callable(funcs):
+        if callable(funcs):
             for hooktype in self.ALLHOOKS:
                 if funcs in hooktype:
                     hooktype.remove(funcs)
+        elif hasattr(funcs, '__iter__'):
+            for hook_function in funcs:
+                self.RemoveEventsHook(hook_function)
+
 
     def _callTileHooks(self, tile: str) -> None:
         self.ground = tile
@@ -274,9 +269,9 @@ class Mario:
 
                 # RAW Mode
                 else:
-                    x = int(self._signed(data[4]))
-                    y = int(self._signed(data[5]))
-                    z = int(self._signed(data[6]))
+                    x = int(signed(data[4]))
+                    y = int(signed(data[5]))
+                    z = int(signed(data[6]))
                     self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
                     self._callAccelerometerHooks(x, y, z)
 
@@ -500,6 +495,9 @@ class Mario:
         except (OSError, BleakError):
                 self._log("Connection error while turning off")
                 await self.disconnect()
+
+def signed(char):
+        return char - 256 if char > 127 else char
 
 def run():
     while asyncio.all_tasks(loop=asyncio.get_event_loop()):
