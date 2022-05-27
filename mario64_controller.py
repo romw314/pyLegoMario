@@ -39,8 +39,6 @@ def acc_to_float(number: int) -> float:
     """
     return min(max(number/18, -1), 1)
 
-
-
 class MarioController(Mario):
     def __init__(self, 
                 doLog: bool=True, 
@@ -56,7 +54,7 @@ class MarioController(Mario):
         self.AddAccelerometerHook(accHandling)
         self.AddTileHook(rgbHandling)
         self.gamepad = vg.VX360Gamepad()
-        self.y_cache=[] # cache of length 5 to store recent y accelerations
+        self.y_cache=[] #  cache of length 5 to store recent y accelerations
 
 def rgbHandling(sender: MarioController, t: str) -> None:
     """
@@ -70,16 +68,13 @@ def rgbHandling(sender: MarioController, t: str) -> None:
     sender.gamepad.update()
 
 def accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
-    """
-    Test Function which will be called for every change in x, y or z accelerometer value.
-    """
     # jumping and movement handling
     if y > LARGE and not "large" in sender.y_cache:
         sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
     # keep a down for big jump
     elif "very large" in sender.y_cache:
         sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
-        # z (ground pound/longjump)
+    # z (ground pound/longjump)
     elif y < -60:
         if not "large" in sender.y_cache:
             sender.gamepad.left_trigger_float(1)
