@@ -1,10 +1,10 @@
 """
-SAMPLE.PY
+mairo_soundboard.py
 This is a sample on how to use mario.py. It shows how to register event hook 
 functions and how to let the script run as an endless loop.
 ###################################################################################
 MIT License
-Copyright (c) 2020 Bruno Hautzenberger
+Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -24,7 +24,7 @@ SOFTWARE.
 
 import json, os, asyncio, random, sys
 from typing import Callable, Union
-from pyLegoMario import *
+from pyLegoMario import Mario, MarioWindow, run
 from pathlib import Path
 import soundfile as sf
 import sounddevice as sd
@@ -70,7 +70,7 @@ async def register_sounds(
             def register_sound_id(sender: Mario, t: str):
                 # only tiles & no already registered tiles
                 if t in tile_mapping.keys():
-                    mario._log(
+                    sender._log(
                         f"{t} is already registered to {tile_mapping[t]}"
                         )
                 elif t in HEX_TO_RGB_TILE.values():
@@ -104,9 +104,8 @@ def select_audio_device(mario: Mario) -> int:
         mario._log("Check console to select audio device")
     except:
         pass
-    prompt = (
-        f"{str(available_devices)}"
-        "\nPlease choose one of the output devices by entering a number.")
+    prompt = (f"{str(available_devices)}\n"
+            "Please choose one of the output devices by entering a number.")
     return pyip.inputInt(prompt, min=0, max=len(available_devices) - 1)
 
 def load_settings() -> dict[str, Union[int, str]]:
@@ -129,7 +128,6 @@ def save_settings(settings: dict) -> None:
 def get_sounds(folder_path: Union[str, Path]) -> dict[str, list[sf.SoundFile]]:
     sounds = {}
     for name in os.listdir(folder_path):
-        # if WAV file
         if name.endswith(".wav"):
             sounds[name] = [sf.read(folder_path / name)]
         # if directory, register all WAV sounds inside
@@ -161,7 +159,7 @@ def tile_hook_factory(
         if tile in sound_mapping.keys():
             # play mapped sound
             sd.play(*random.choice(sounds[sound_mapping[tile]]), device=device)
-            mario._log(f"Playing sound {sound_mapping[tile]}")
+            sender._log(f"Playing sound {sound_mapping[tile]}")
     return play_tile_sound
 
 if __name__ == "__main__":
