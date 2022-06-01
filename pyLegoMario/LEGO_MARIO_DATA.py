@@ -3,16 +3,16 @@ from pathlib import Path
 # hex to ground colors
 # color messages are always shape (hexadecimal): 08004501ffffxx00 (where xx is the color code)
 HEX_TO_COLOR_TILE = {
-    0x0c: "Purple", 
-    0x13: "White", 
-    0x15: "Red", 
-    0x17: "Blue", 
-    0x18: "Yellow", 
-    0x1a: "Black", 
-    0x25: "Green", 
-    0x38: "Nougat Brown", 
+    0x0c: "Purple",
+    0x13: "White",
+    0x15: "Red",
+    0x17: "Blue",
+    0x18: "Yellow",
+    0x1a: "Black",
+    0x25: "Green",
+    0x38: "Nougat Brown",
     0x42: "Cyan",
-    0x6a: "Brown"} 
+    0x6a: "Brown"}
 
 # hex to Lego RGB codes
 # code messages are always shape (hexadecimal): 08004501xx00ffff (where xx is the tile code)
@@ -20,7 +20,7 @@ with open(Path(__file__).parent / Path("ALL_RGB_CODES.json")) as f:
     HEX_TO_RGB_TILE = {x[2]:x[1] for x in json.load(f)}
 
 # hex to pants codes
-HEX_TO_PANTS = {        # Pins 
+HEX_TO_PANTS = {        # Pins
     0x00: "None",       #000000
     0x03: "Bee",        #000011
     0x05: "Luigi",      #000101
@@ -74,7 +74,8 @@ REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
 VALID_PORT_MODES = {0:(0,1), 1:(0,1), 2:(0,), 3:(0,1,2,3), 4:(0,), 6:(0,)}
 
 def pifs_command(port: int, mode: int, notifications: bool = True, delta_interval: int = 1):
-    """Creates a PORT_INPUT_FORMAT_SETUP message according to the Lego Wireless Protocol: https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#port-input-format-setup-single
+    """Creates a PORT_INPUT_FORMAT_SETUP message according to the Lego
+    Wireless Protocol: https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#port-input-format-setup-single
 
     Args:
     port (int): The designated Port.
@@ -96,36 +97,40 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
     # Input Validation
     # Port
     if port not in (0,1,2,3,4):
-        raise ValueError("Invalid Port, expected one of (0,1,2,3,4) but got %s" % port)
+        raise ValueError(f"Invalid Port, expected one of (0,1,2,3,4) but got {port}")
     # Mode
-    
+
     try:
         mode = int(mode)
-    except (TypeError, ValueError):
-        raise TypeError("Mode must be castable to int, got %s instead" % type(mode))
+    except (TypeError, ValueError) as e:
+        raise TypeError(f"Mode must be castable to int, got {type(mode)} \
+                        instead") from e
     if mode not in VALID_PORT_MODES[port]: # not using .get because I verified port above
-        raise ValueError("Invalid mode %s for port %s, allowed modes for this port are: %s." % (mode, port, VALID_PORT_MODES[port]))
+        raise ValueError(
+            f"Invalid mode {mode} for port {port}, allowed modes for this \
+            port are: {VALID_PORT_MODES[port]}.")
     # Delta Interval
     try:
         int(delta_interval)
-    except (TypeError, ValueError):
-        raise TypeError("Delta Interval must be castable to int, got %s instead" % type(delta_interval))
+    except (TypeError, ValueError) as e:
+        raise TypeError(f"Delta Interval must be castable to int, got \
+                        {type(delta_interval)} instead") from e
 
     return bytearray([
-                    0x0A, # Message Length
-                    0x00, # Unused
-                    0x41, # Message Type
+                    0x0A,  # Message Length
+                    0x00,  # Unused
+                    0x41,  # Message Type
                     port,
                     mode,
                     int(delta_interval),
                     0x00,
                     0x00,
                     0x00,
-                    int(bool(notifications)) # Notifications en/disabled
+                    int(bool(notifications))  # Notifications en/disabled
                     ])
 
 # Subscribtion Commands
-SUBSCRIBE_IMU_COMMAND =  pifs_command(0, 0, delta_interval=4)
+SUBSCRIBE_IMU_COMMAND =  pifs_command(0, 0, delta_interval=2)
 SUBSCRIBE_RGB_COMMAND = pifs_command(1, 0, delta_interval=1)
 SUBSCRIBE_PANTS_COMMAND = pifs_command(2, 0)
 
@@ -156,7 +161,7 @@ BINARY_GESTURES = { # most likely wrong
                 0b0000000000000100: "Gesture4",
                 0b0000000000001000: "Gesture8",
                 0b0000000000010000: "Shake",
-                0b0000000000100000: "Gesture32", 
+                0b0000000000100000: "Gesture32",
                 0b0000000001000000: "Gesture64",
                 0b0000000010000000: "Gesture128",
                 0b0000000100000000: "Turning",
