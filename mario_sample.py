@@ -48,19 +48,19 @@ def my_pants_hook(mario: Mario, powerup: str):
 
 
 if __name__ == "__main__":
-    # Initialize Marios
+    # Initialize Mario
     mario = Mario(
-        doLog=True, 
-        accelerometerEventHooks=my_accelerometer_hook, 
-        tileEventHooks=my_tile_hook)
+        do_log=True, 
+        accelerometer_hooks=my_accelerometer_hook, 
+        tile_event_hooks=my_tile_hook)
     """Add Event Hooks in constructor (above) or manually (below).
     Event hooks are functions to be called every time Mario 
     sends data of a certain kind.
     The functions in this example don't do anything. 
     Try inserting a print call."""
+    mario.add_pants_hooks(my_pants_hook)
     # create GUI window
     MarioWindow(mario)
-    mario.AddPantsHook(my_pants_hook)
     #loop.create_task(SOME COROUTINE)
     
     run()

@@ -51,8 +51,8 @@ class MarioController(Mario):
 
         super().__init__(doLog, accelerometerEventHooks, tileEventHooks,
                         pantsEventHooks, logEventHooks, defaultVolume)
-        self.AddAccelerometerHook(accHandling)
-        self.AddTileHook(rgbHandling)
+        self.add_accelerometer_hooks(accHandling)
+        self.add_tile_hooks(rgbHandling)
         self.gamepad = vg.VX360Gamepad()
         self.y_cache=[] #  cache of length 5 to store recent y accelerations
 

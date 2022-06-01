@@ -53,41 +53,38 @@ async def register_sounds(
         # copy old settings
         if sound_name in sounds.keys():
             tile_mapping[tile_name] = sound_name
-            mario._log(f"Imported {tile_name}: {sound_name}")
+            mario.log(f"Imported {tile_name}: {sound_name}")
         else:
             # drop invalid setting by saving copy without that mapping
-            mario._log(f"Invalid setting: file {sound_name} not found. Setting deleted.")
+            mario.log(f"Invalid setting: file {sound_name} not found. Setting deleted.")
 
     for sound_name, sound_list in sounds.items():
         # check if already registered from settings
         if not sound_name in tile_mapping.values():
-            mario._log(
-                f"Please scan tile for this "
-                f"sound{' group' if len(sound_list) > 1 else ''}: {sound_name}")
+            display_name = (f"sound{' group' if len(sound_list) > 1 else ''}:"
+                            f" {sound_name}")
+            mario.log(
+                f"Please scan tile for this {display_name}")
             # unpack needed because sound contains data & bitrate
             sd.play(*random.choice(sound_list), device=device)
             # Add event hook that registers sound
             def register_sound_id(sender: Mario, t: str):
                 # only tiles & no already registered tiles
                 if t in tile_mapping.keys():
-                    sender._log(
-                        f"{t} is already registered to {tile_mapping[t]}"
-                        )
+                    sender.log(
+                        f"{t} is already registered to {tile_mapping[t]}")
                 elif t in HEX_TO_RGB_TILE.values():
                     tile_mapping[t] = sound_name
                     # remove event hook as soon as tile was registered
-                    sender.RemoveEventsHook(register_sound_id)
-                    mario._log(
-                        f"Registered sound"
-                        f"{' group' if len(sound_list) > 1 else ''} {sound_name} "
-                        f"to tile {t}")
-            mario.AddTileHook(register_sound_id)
+                    sender.remove_hooks(register_sound_id)
+                    mario.log(f"Registered {display_name} to tile {t}")
+            mario.add_tile_hooks(register_sound_id)
             # wait for registration
             while not sound_name in tile_mapping.values():
                 await asyncio.sleep(0.5)
-    # save settings
-    settings["sound_mappings"] = tile_mapping
-    save_settings(settings)
+            # save after each new registration
+            settings["sound_mappings"] = tile_mapping
+            save_settings(settings)
     return tile_mapping
 
 def select_audio_device(mario: Mario) -> int:
@@ -101,7 +98,7 @@ def select_audio_device(mario: Mario) -> int:
     """
     available_devices = sd.query_devices()
     try:
-        mario._log("Check console to select audio device")
+        mario.log("Check console to select audio device")
     except:
         pass
     prompt = (f"{str(available_devices)}\n"
@@ -113,15 +110,15 @@ def load_settings() -> dict[str, Union[int, str]]:
         with open(DIR_PATH / "settings.json", "r") as f:
             settings = json.load(f)
     except FileNotFoundError:
-        mario._log("No previous settings found, starting from scratch.")
+        mario.log("No previous settings found, starting from scratch.")
         settings = {}
     except json.JSONDecodeError:
-        mario._log("Invalid JSON file. Loading empty settings.")
+        mario.log("Invalid JSON file. Loading empty settings.")
         settings = {}
     return settings
 
 def save_settings(settings: dict) -> None:
-    mario._log("Saving settings")
+    mario.log("Saving settings")
     with open(DIR_PATH / "settings.json", "w") as f:
             json.dump(settings, f, indent=4)
 
@@ -147,8 +144,9 @@ def tile_hook_factory(
     """Generates a function that can be registered as Mario's rgb event hook.
 
     Args:
-        sound_mapping (dict[str, str]): A mapping of which tile should play which sound.
-        sounds (dict[str, list[sf.SoundFile]]): Mapping of sound names to SoundFile data.
+        sound_mapping (dict[str, str]): A mapping from tiles to sound names.
+        sounds (dict[str, list[sf.SoundFile]]): Mapping of sound names to
+            SoundFile data.
         device (int): The device that should be used to play back the sounds.
 
     Returns:
@@ -159,7 +157,7 @@ def tile_hook_factory(
         if tile in sound_mapping.keys():
             # play mapped sound
             sd.play(*random.choice(sounds[sound_mapping[tile]]), device=device)
-            sender._log(f"Playing sound {sound_mapping[tile]}")
+            sender.log(f"Playing sound {sound_mapping[tile]}")
     return play_tile_sound
 
 if __name__ == "__main__":
@@ -167,7 +165,7 @@ if __name__ == "__main__":
     if not os.path.isdir(DIR_PATH):
         os.mkdir(DIR_PATH)
     # Initialize Mario
-    mario = Mario(True, defaultVolume=0)
+    mario = Mario(True, default_volume=0)
     MarioWindow(mario)
     
     settings = load_settings()
@@ -182,5 +180,5 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     sound_mapping = loop.run_until_complete(register_sounds(mario, sounds))
     play_sound_tile_hook = tile_hook_factory(sound_mapping, sounds, device)
-    mario.AddTileHook(play_sound_tile_hook)
+    mario.add_tile_hooks(play_sound_tile_hook)
     run()

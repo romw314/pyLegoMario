@@ -20,104 +20,118 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .LEGO_MARIO_DATA import *
+
 import asyncio
-from bleak import BleakScanner, BleakClient, BleakError
 from typing import Any, Callable, Iterable, Union
+from bleak import BleakScanner, BleakClient, BleakError
+from .LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
+    HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
+    LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
+    SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
+    MUTE_COMMAND, REQUEST_RGB_COMMAND)
 
 
 class Mario:
 
-    def __init__(self, 
-                doLog: bool=True, 
-                accelerometerEventHooks: Union[
-                    Callable[["Mario", int, int, int], Any], 
+    def __init__(self,
+                do_log: bool=True,
+                accelerometer_hooks: Union[
+                    Callable[["Mario", int, int, int], Any],
                     Iterable[Callable[["Mario", int, int, int], Any]]
                     ]=None,
-                tileEventHooks: Union[
-                    Callable[["Mario", str], Any], 
-                    Iterable[Callable[["Mario", str], Any]]
-                    ]=None, 
-                pantsEventHooks: Union[
-                    Callable[["Mario", str], Any], 
-                    Iterable[Callable[["Mario", str], Any]]
-                    ]=None, 
-                logEventHooks: Union[
-                    Callable[["Mario", str], Any], 
+                tile_event_hooks: Union[
+                    Callable[["Mario", str], Any],
                     Iterable[Callable[["Mario", str], Any]]
                     ]=None,
-                defaultVolume: Union[int, None]=None
+                pants_event_hooks: Union[
+                    Callable[["Mario", str], Any],
+                    Iterable[Callable[["Mario", str], Any]]
+                    ]=None,
+                log_event_hooks: Union[
+                    Callable[["Mario", str], Any],
+                    Iterable[Callable[["Mario", str], Any]]
+                    ]=None,
+                default_volume: Union[int, None]=None
                 ) -> None:
         """Object to connect and control a single Lego Mario or Luigi.
 
         Args:
             doLog (bool, optional): Enables Logs to Stdout. Defaults to True.
 
-            accelerometerEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new accelerometer data is received. 
-                Functions need to take four inputs (sender: Mario, x: int, y: int, z: int). Defaults to None.
+            accelerometerEventHooks (func or list of functions, optional):
+                Event Hook(s) that should be called every time new
+                accelerometer data is received.
+                Functions need to take four inputs
+                (sender: Mario, x: int, y: int, z: int). Defaults to None.
 
-            tileEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new camera data is received. 
-                Functions need to take two inputs: (sender: Mario, ground: str). Defaults to None.
+            tileEventHooks (func or list of functions, optional):
+                Event Hook(s) that should be called every time new camera
+                data is received. Functions need to take two inputs:
+                (sender: Mario, ground: str). Defaults to None.
 
-            pantsEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time new pants data is received. 
-                Functions need to take two inputs: (sender: Mario, pants: str). Defaults to None.
+            pantsEventHooks (func or list of functions, optional):
+                Event hook(s) that will be called every time new pants data
+                is received. Functions need to take two inputs:
+                (sender: Mario, pants: str). Defaults to None.
 
-            logEventHooks (Union[Callable, list], optional): Event Hook(s) that should be called every time something gets logged. 
-                Functions need to take two inputs: (sender: Mario, msg: str). Defaults to None.
-                
-            defaultVolume (Union[int, None], optional): Volume (0-100) that should be set every time Mario reconnects. 
-                If not provided, will not adjust volume. Defaults to None.
+            logEventHooks (func or list of functions, optional): Event Hook(s)
+                that will be called every time something gets logged. Functions
+                need to take two inputs: (sender: Mario, msg: str).
+                Defaults to None.
+
+            defaultVolume (func or list of functions, optional): Volume (0-100)
+                that will be set every time Mario reconnects. If not provided,
+                will not adjust volume. Defaults to None.
         """
 
-        self._doLog = doLog # output logs to stdout only if True
-        self._run = False
-        self._autoReconnect = True  # if True, will try to reconnect as soon as disconnected
-        self._client = None # bleak client
-        self.defaultVolume = defaultVolume # volume to set Mario to after every connection. Default None won't change volume.
+        self.do_log = do_log  # output logs to stdout only if True
+        self.run = False
+        self.auto_reconnect = True  # handles reconnection on disconnect
+        self.client: Union[BleakClient, None] = None
+        self.default_volume = default_volume  # if None, volume won't be changed
 
         # values to keep most recent event in memory
         self.pants: str = None
         self.ground: str = None
         self.acceleration: tuple[int, int, int] = None
-        self.recentTile: str = None
+        self.recent_tile: str = None
 
-        self._accelerometerEventHooks: list[
+        self._accelerometer_hooks: list[
                                         Callable[
-                                            [Mario, int, int, int],
-                                            Any]
+                                            [Mario, int, int, int], Any]
                                         ] = []
-        self._tileEventHooks: list[Callable[[Mario, str], Any]] = []
-        self._pantsEventHooks: list[Callable[[Mario, str], Any]] = []
-        self._logEventHooks: list[Callable[[Mario, str], Any]] = []
-        self.ALLHOOKS = (self._accelerometerEventHooks, self._pantsEventHooks,
-                        self._tileEventHooks, self._logEventHooks)
+        self._tile_event_hooks: list[Callable[[Mario, str], Any]] = []
+        self._pants_event_hooks: list[Callable[[Mario, str], Any]] = []
+        self._log_event_hooks: list[Callable[[Mario, str], Any]] = []
+        self._all_hooks = (self._accelerometer_hooks, self._pants_event_hooks,
+                         self._tile_event_hooks, self._log_event_hooks)
 
-        self.AddAccelerometerHook(accelerometerEventHooks)
-        self.AddTileHook(tileEventHooks)
-        self.AddPantsHook(pantsEventHooks)
-        self.AddLogHook(logEventHooks)
+        self.add_accelerometer_hooks(accelerometer_hooks)
+        self.add_tile_hooks(tile_event_hooks)
+        self.add_pants_hooks(pants_event_hooks)
+        self.add_log_hooks(log_event_hooks)
 
-        try: # if event loop exists, use that one
+        try:  # if event loop exists, use that one
             asyncio.get_event_loop().create_task(self.connect())
-        except RuntimeError: # otherwise, create a new one
+        except RuntimeError:  # otherwise, create a new one
             asyncio.set_event_loop(asyncio.SelectorEventLoop())
             asyncio.get_event_loop().create_task(self.connect())
 
-    def _log(self, msg, end="\n"):
+    def log(self, msg, end="\n"):
         """Log any message to stdout and call all assigned LogEvent handlers.
 
         Args:
             msg (object): Any printable object.
             end (str, optional): Same as end in print(). Defaults to "\n".
         """
-        for func in self._logEventHooks:
+        for func in self._log_event_hooks:
             func(self, msg)
-        if self._doLog:
-            address = "Not Connected" if not self._client else self._client.address
+        if self.do_log:
+            address = "Not Connected" if not self.client else self.client.address
             print((f"\r{address}: {msg}").ljust(100), end=end)
 
-    def AddLogHook(
-        self, 
+    def add_log_hooks(
+        self,
         funcs: Union[
             Callable[["Mario", str], Any], 
             Iterable[Callable[["Mario", str], Any]]]
@@ -125,16 +139,16 @@ class Mario:
         """Adds function(s) as event hooks for updated tile or color values.
 
         Args:
-            funcs (function or list of functions): function or list of functions that take (Mario, str) as input.
+            funcs (function or list of functions): functions take (Mario, str) as input.
         """
         if callable(funcs):
-            self._logEventHooks.append(funcs)
+            self._log_event_hooks.append(funcs)
         elif hasattr(funcs, '__iter__'):
             for hook_function in funcs:
-                self.AddLogHook(hook_function)
+                self.add_log_hooks(hook_function)
 
-    def AddTileHook(
-        self, 
+    def add_tile_hooks(
+        self,
         funcs: Union[
             Callable[["Mario", str], Any], 
             Iterable[Callable[["Mario", str], Any]]]
@@ -142,16 +156,16 @@ class Mario:
         """Adds function(s) as event hooks for updated tile or color values.
 
         Args:
-            funcs (Union[Callable[["Mario", str], Any], Iterable[Callable[["Mario", str], Any]]]): function or list of functions that take (Mario, str) as input.
+            funcs (func or list of functions): functions take (Mario, str) as input.
         """
         if callable(funcs):
-            self._tileEventHooks.append(funcs)
+            self._tile_event_hooks.append(funcs)
         elif hasattr(funcs, '__iter__'):
             for hook_function in funcs:
-                self.AddTileHook(hook_function)
+                self.add_tile_hooks(hook_function)
 
-    def AddAccelerometerHook(
-        self, 
+    def add_accelerometer_hooks(
+        self,
         funcs: Union[
             Callable[["Mario", int, int, int], Any], 
             Iterable[Callable[["Mario", int, int, int], Any]]]
@@ -159,39 +173,41 @@ class Mario:
         """Adds function(s) as event hooks for updated accelerometer values.
 
         Args:
-            funcs (function or list of functions): function or list of functions that take (Mario, int, int, int) as input.
+            funcs (function or list of functions): functions take input as
+            (Mario, int, int, int).
         """
         if callable(funcs):
-            self._accelerometerEventHooks.append(funcs)
+            self._accelerometer_hooks.append(funcs)
         elif hasattr(funcs, '__iter__'):
             for hook_function in funcs:
-                self.AddAccelerometerHook(hook_function)
+                self.add_accelerometer_hooks(hook_function)
 
-    def AddPantsHook(
-        self, 
+    def add_pants_hooks(
+        self,
         funcs: Union[
-            Callable[["Mario", str], Any], 
+            Callable[["Mario", str], Any],
             Iterable[Callable[["Mario", str], Any]]]
         ) -> None:
         """Adds function(s) as event hooks for updated pants values.
 
         Args:
-            funcs (function or list of functions): function or list of functions that take a Mario object and a single string as input.
+            funcs (func or list of functions): function or list of functions
+                Function must take Mario and string as input.
         """
         if callable(funcs):
-            self._pantsEventHooks.append(funcs)
+            self._pants_event_hooks.append(funcs)
         elif hasattr(funcs, '__iter__'):
             for hook_function in funcs:
-                self.AddPantsHook(hook_function)
-        
-        
-    def RemoveEventsHook(
+                self.add_pants_hooks(hook_function)
+
+
+    def remove_hooks(
         self,
         funcs: Union[
             Callable[[Any], Any],
             Iterable[Callable[[Any], Any]]]
         ) -> None:
-        
+
         """Removes function(s) as event hooks.
             Note that this is without consideration for the type of hook.
 
@@ -200,36 +216,36 @@ class Mario:
                 callable or iterable of callable.
         """
         if callable(funcs):
-            for hooktype in self.ALLHOOKS:
+            for hooktype in self._all_hooks:
                 if funcs in hooktype:
                     hooktype.remove(funcs)
         elif hasattr(funcs, '__iter__'):
             for hook_function in funcs:
-                self.RemoveEventsHook(hook_function)
+                self.remove_hooks(hook_function)
 
 
-    def _callTileHooks(self, tile: str) -> None:
+    def _call_tile_hooks(self, tile: str) -> None:
         self.ground = tile
-        for func in self._tileEventHooks:
+        for func in self._tile_event_hooks:
             func(self, tile)
 
-    def _callAccelerometerHooks(self, x: int, y: int, z: int) -> None:
+    def _call_accelerometer_hooks(self, x: int, y: int, z: int) -> None:
         self.acceleration = (x, y, z)
-        for func in self._accelerometerEventHooks:
+        for func in self._accelerometer_hooks:
             func(self, x, y, z)
-    
-    def _callPantsHooks(self, powerup: str) -> None:
+
+    def _call_pants_hooks(self, powerup: str) -> None:
         self.pants = powerup
-        for func in self._pantsEventHooks:
+        for func in self._pants_event_hooks:
             func(self, powerup)
 
-    def _handle_events(self, sender: int, data: bytearray) -> None:
+    def _handle_events(self, sender: int, data: bytearray) -> None:  # pylint: disable=unused-argument
         """Handles bluetooth notifications.
-        
+
         Decodes the sent data and calls Mario's appropriate event hooks.
 
         Args:
-            sender (int): Only necessary for bleak compatibility 
+            sender (int): Only necessary for bleak compatibility
             data (bytearray): The data of the notification
         """
         hex_data = data.hex()
@@ -238,23 +254,23 @@ class Mario:
             # Camera Sensor Data
             if data[3] == 0x01:
                 if data[5] == data[6] == 0xff:
-                    self._log("IDLE?, Hex: %s" % hex_data)
+                    self.log(f"IDLE?, Hex: {hex_data}")
                     return
                 # RGB code
                 if data[5] == 0x00:
                     tile = HEX_TO_RGB_TILE.get(
                         data[4], 
                         f"Unkown Tile Code: {hex(data[4])}")
-                    self.recentTile = tile
-                    self._log("%s Tile, Hex: %s" % (tile, hex_data))
-                    self._callTileHooks(tile)
+                    self.recent_tile = tile
+                    self.log(f"{tile} Tile, Hex: {hex_data}")
+                    self._call_tile_hooks(tile)
                 # Ground Colors
                 elif data[5] == 0xff:
                     color = HEX_TO_COLOR_TILE.get(
                         data[6],
                         f"Unkown Color: {hex(data[6])}")
-                    self._log(f"{color} Ground, Hex: {hex_data}")
-                    self._callTileHooks(color)
+                    self.log(f"{color} Ground, Hex: {hex_data}")
+                    self._call_tile_hooks(color)
 
             # Accelerometer data
             elif data[3] == 0x00:
@@ -262,39 +278,39 @@ class Mario:
                 if data[4:6] == data[6:]:
                     gesture = ""
                     integer_data = int.from_bytes(data[4:6], "big")
-                    for bin_gest in BINARY_GESTURES.keys():
-                        if integer_data & bin_gest:
-                            gesture += BINARY_GESTURES[bin_gest]
-                    self._log(gesture)
+                    for binary, name in BINARY_GESTURES.items():
+                        if integer_data & binary:
+                            gesture += name
+                    self.log(gesture)
 
                 # RAW Mode
                 else:
                     x = int(signed(data[4]))
                     y = int(signed(data[5]))
                     z = int(signed(data[6]))
-                    self._log("X: %i Y: %i Z: %i" % (x, y, z), end="")
-                    self._callAccelerometerHooks(x, y, z)
+                    self.log(f"X: {x} Y: {y} Z: {z}", end="")
+                    self._call_accelerometer_hooks(x, y, z)
 
             # Pants data
             elif data[3] == 0x02:
                 pants = HEX_TO_PANTS.get(data[4], "Unkown")
                 binary_pants = bin(data[4])
-                self._log(f"{pants} Pants, "
-                    f"Pants-Only Binary: {binary_pants}," 
+                self.log(f"{pants} Pants, "
+                    f"Pants-Only Binary: {binary_pants},"
                     f"Hex: {hex_data}")
-                self._callPantsHooks(pants)
+                self._call_pants_hooks(pants)
             # Port 3 data - uncertain about all of it
             elif data[3] == 0x03:
                 if data[4] == 0x13 and data[5] == 0x01:
                     tile = HEX_TO_RGB_TILE.get(data[6], "Unkown Tile")
-                    self._log(f"Port 3: Jumped on {tile}, Hex: {hex_data}")
+                    self.log(f"Port 3: Jumped on {tile}, Hex: {hex_data}")
                 else:
                     #TBD
-                    self._log(
+                    self.log(
                         f"Unknown value from port 3: {data[4:].hex()}, "
                         f"Hex: {hex_data}")
             else:
-                self._log(
+                self.log(
                     f"Unknown value from port {data[3]}: "
                     f"{data[4:].hex()}, Hex: {hex_data}")
 
@@ -303,57 +319,57 @@ class Mario:
             action = HEX_TO_HUB_ACTIONS.get(
                 data[3], 
                 f"Unkown Hub Action, Hex: {hex_data}")
-            self._log(f"{action}, Hex: {hex_data}")
-            if data[3] == 0x31: # 0x31 = Hub Will Disconnect
+            self.log(f"{action}, Hex: {hex_data}")
+            if data[3] == 0x31:  # 0x31 = Hub Will Disconnect
                 asyncio.get_event_loop().create_task(self.disconnect())
-        elif data[2] == 0x04: # Hub Attached I/O
+        elif data[2] == 0x04:  # Hub Attached I/O
             if data[4]:
-                self._log(f"Port {data[3]} got attached, Hex: {hex_data}")
+                self.log(f"Port {data[3]} got attached, Hex: {hex_data}")
             else:
-                self._log(
+                self.log(
                     f"Port {data[3]} got detached, "
                     f"this shouldn't happen. Hex: {hex_data}")
-        elif data[2] == 0x47: # Port Input Format Handshake
-            self._log(
+        elif data[2] == 0x47:  # Port Input Format Handshake
+            self.log(
                 f"Port {data[3]} changed to mode {data[4]} "
                 f"with{'out' if not data[9] else ''} notifications, "
                 f"Hex: {hex_data}")
         elif data[2] == 0x01 and data[4] == 0x06:
-            property = HEX_TO_HUB_PROPERTIES.get(data[3], "Unknown Property")
-            self._log(
-                f"Hub Update About {property}: "
+            hub_property = HEX_TO_HUB_PROPERTIES.get(data[3], "Unknown Property")
+            self.log(
+                f"Hub Update About {hub_property}: "
                 f"{data[5:].hex()}, "
                 f"Hex: {hex_data}")
         else:   # Other
-            self._log(
+            self.log(
                 f"Unknown message - check Lego Wireless Protocol, "
                 f"Hex: {hex_data}")
 
     async def connect(self) -> bool:
-        self._run = True
+        self.run = True
         retries=0
-        while self._run:
+        while self.run:
             retries+=1
             if retries > 3:
-                self._log("Stopped after 3 attempts, disconnecting...")
+                self.log("Stopped after 3 attempts, disconnecting...")
                 break
-            self._log("Searching for device...")
+            self.log("Searching for device...")
             devices = await BleakScanner.discover()
             for d in devices:
                 if d.name and (
-                    d.name.lower().startswith("lego luigi") 
-                    or 
+                    d.name.lower().startswith("lego luigi")
+                    or
                     d.name.lower().startswith("lego mario")
                     ):
                     try:
                         client = BleakClient(d.address)
                         await client.connect()
-                        self._client = client
-                        self._log(f"Mario Connected: {client.address}")
+                        self.client = client
+                        self.log(f"Mario Connected: {client.address}")
 
                         # subscribe to events
                         await client.start_notify(
-                            LEGO_CHARACTERISTIC_UUID, 
+                            LEGO_CHARACTERISTIC_UUID,
                             self._handle_events)
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(
@@ -361,24 +377,24 @@ class Mario:
                             SUBSCRIBE_IMU_COMMAND)
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(
-                            LEGO_CHARACTERISTIC_UUID, 
+                            LEGO_CHARACTERISTIC_UUID,
                             SUBSCRIBE_RGB_COMMAND)
                         await asyncio.sleep(0.1)
                         await client.write_gatt_char(
-                            LEGO_CHARACTERISTIC_UUID, 
+                            LEGO_CHARACTERISTIC_UUID,
                             SUBSCRIBE_PANTS_COMMAND)
 
                         client.is_connected # wait for connection
 
                         asyncio.get_event_loop().create_task(
                             self.check_connection_loop())
-                        
+
                         # change volume to provided default
-                        if not self.defaultVolume is None: 
-                            self.set_volume(self.defaultVolume)
+                        if not self.default_volume is None: 
+                            self.set_volume(self.default_volume)
                         return True
-                    except: # any error during communication
-                        self._log("Error connecting")
+                    except Exception as ex:  # pylint: disable=broad-except
+                        self.log(f"Error connecting: {ex}")
                         await self.disconnect()
                         return False
         await self.disconnect()
@@ -399,15 +415,15 @@ class Mario:
             port (int, optional): Port to request value from. Defaults to 0.
         """
         assert port in (0,1,2,3,4,6), "Use a supported port (0,1,2,3,4,6)"
-        if self._client:
+        if self.client:
             try:
                 command = REQUEST_RGB_COMMAND
                 command[3] = port
                 command = bytearray(command)
-                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
+                await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
                                                     command)
             except (OSError, BleakError):
-                self._log("Connection error while requesting port value")
+                self.log("Connection error while requesting port value")
                 await self.disconnect()
 
     def set_volume(self, new_volume: int) -> None:
@@ -418,21 +434,22 @@ class Mario:
                 Values <0 or >100 will be set to 0 or 100 respectively.
         """
         new_volume = min(max(new_volume, 0), 100)
-        if self._client:
+        if self.client:
             try:
                 command = bytearray([*MUTE_COMMAND[:5], new_volume])
                 asyncio.get_event_loop().create_task(
-                    self._client.write_gatt_char(
-                        LEGO_CHARACTERISTIC_UUID, 
+                    self.client.write_gatt_char(
+                        LEGO_CHARACTERISTIC_UUID,
                         command)
                     )
             except (OSError, BleakError):
-                self._log("Connection error while setting volume")
+                self.log("Connection error while setting volume")
                 asyncio.get_event_loop().create_task(self.disconnect())
 
-    def port_setup(self, port: int, mode: int, notifications: bool = True) -> None:
+    def port_setup(self, port: int, mode: int, notifications: bool= True) -> None:
         """Configures the settings of one of Mario's ports.
-        Sends a message to Mario that configures the way one of its ports communicates.
+        Sends a message to Mario that configures the way one of its ports
+        communicates.
 
         Args:
         port (int): The designated Port.
@@ -441,64 +458,80 @@ class Mario:
             Port 2: Binary (Pants)
             Port 3: ??
             Port 4: ??
-        mode (int): The mode to set the port to. 
-            Available modes: 
-                Port 0: (0,1), 
-                Port 1: (0,1), 
-                Port 2: (0), 
-                Port 3: (0,1,2,3), 
+        mode (int): The mode to set the port to.
+            Available modes:
+                Port 0: (0,1),
+                Port 1: (0,1),
+                Port 2: (0),
+                Port 3: (0,1,2,3),
                 Port 4: (0,1).
             Also see https://github.com/bricklife/LEGO-Mario-Reveng
-        notifications (bool, optional): Whether to receive updates about 
-            new values of the port. Defaults to True. 
+        notifications (bool, optional): Whether to receive updates about
+            new values of the port. Defaults to True.
             If False, you'll need to manually request port values.
         """
-        if self._client:
+        if self.client:
             try:
                 command = pifs_command(port, mode, notifications)
-                asyncio.get_event_loop().create_task(self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, command))
+                asyncio.get_event_loop().create_task(
+                    self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
+                                                 command))
             except (OSError, BleakError):
-                self._log("Connection error while setting up port")
+                self.log("Connection error while setting up port")
                 asyncio.get_event_loop().create_task(self.disconnect())
 
     async def check_connection_loop(self) -> None:
-        while self._client:
+        while self.client:
             try:
-                if not self._client.is_connected:
-                    self._log("Disconnect detected during connection check")
+                if not self.client.is_connected:
+                    self.log("Disconnect detected during connection check")
                     await self.disconnect()
                 await asyncio.sleep(3)
             except (OSError, BleakError):
-                self._log("Error during connection check")
+                self.log("Error during connection check")
                 await self.disconnect()
 
     async def disconnect(self) -> None:
         try:
-            self._log("Disconnecting... ")
-            if self._client:
-                await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, DISCONNECT_COMMAND)
-                await self._client.disconnect()
-                self._client = None
+            self.log("Disconnecting... ")
+            if self.client:
+                await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
+                                                   DISCONNECT_COMMAND)
+                await self.client.disconnect()
+                self.client = None
         except (OSError, BleakError):
-            self._log("Connection error while disconnecting")
-            self._client = None
-        if self._autoReconnect:
+            self.log("Connection error while disconnecting")
+            self.client = None
+        if self.auto_reconnect:
             asyncio.get_event_loop().create_task(self.connect())
         else:
-            self._run = False
+            self.run = False
 
     async def turn_off(self) -> None:
         try:
-            self._log("Turning Off... ")
-            await self._client.write_gatt_char(LEGO_CHARACTERISTIC_UUID, TURN_OFF_COMMAND)
+            self.log("Turning Off... ")
+            await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
+                                               TURN_OFF_COMMAND)
             await self.disconnect()
         except (OSError, BleakError):
-                self._log("Connection error while turning off")
-                await self.disconnect()
+            self.log("Connection error while turning off")
+            await self.disconnect()
+
+    async def await_connection(self):
+        while not self.is_connected:
+            await asyncio.sleep(0.5)
+        return
+
+    @property
+    def is_connected(self):
+        if self.client:
+            return self.client.is_connected
+        return False
 
 def signed(char):
-        return char - 256 if char > 127 else char
+    return char - 256 if char > 127 else char
 
 def run():
     while asyncio.all_tasks(loop=asyncio.get_event_loop()):
-        asyncio.get_event_loop().run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=asyncio.get_event_loop())))
+        asyncio.get_event_loop().run_until_complete(asyncio.gather(
+            *asyncio.all_tasks(loop=asyncio.get_event_loop())))
