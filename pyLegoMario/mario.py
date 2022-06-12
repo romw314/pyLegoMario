@@ -20,11 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
 import asyncio
 from typing import Any, Callable, Iterable, Union
 from bleak import BleakScanner, BleakClient, BleakError
-from .LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
+try:
+    from .LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
+        HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
+        LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
+        SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
+        MUTE_COMMAND, REQUEST_RGB_COMMAND)
+except ImportError:
+    from LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
     HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
     LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
     SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
@@ -32,7 +38,8 @@ from .LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
 
 
 class Mario:
-
+    """Object to control and monitor a Lego Mario via Bluetooth.
+    """
     def __init__(self,
                 do_log: bool=True,
                 accelerometer_hooks: Union[
@@ -53,10 +60,9 @@ class Mario:
                     ]=None,
                 default_volume: Union[int, None]=None
                 ) -> None:
-        """Object to connect and control a single Lego Mario or Luigi.
-
+        """
         Args:
-            doLog (bool, optional): Enables Logs to Stdout. Defaults to True.
+            do_log (bool, optional): Enables Logs to Stdout. Defaults to True.
 
             accelerometerEventHooks (func or list of functions, optional):
                 Event Hook(s) that should be called every time new
@@ -200,14 +206,12 @@ class Mario:
             for hook_function in funcs:
                 self.add_pants_hooks(hook_function)
 
-
     def remove_hooks(
         self,
         funcs: Union[
             Callable[[Any], Any],
             Iterable[Callable[[Any], Any]]]
         ) -> None:
-
         """Removes function(s) as event hooks.
             Note that this is without consideration for the type of hook.
 
@@ -239,7 +243,7 @@ class Mario:
         for func in self._pants_event_hooks:
             func(self, powerup)
 
-    def _handle_events(self, sender: int, data: bytearray) -> None:  # pylint: disable=unused-argument
+    def _handle_events(self, sender: int, data: bytearray) -> None:
         """Handles bluetooth notifications.
 
         Decodes the sent data and calls Mario's appropriate event hooks.
@@ -340,16 +344,16 @@ class Mario:
                 f"Hub Update About {hub_property}: "
                 f"{data[5:].hex()}, "
                 f"Hex: {hex_data}")
-        else:   # Other
+        else:  # Other
             self.log(
                 f"Unknown message - check Lego Wireless Protocol, "
                 f"Hex: {hex_data}")
 
     async def connect(self) -> bool:
         self.run = True
-        retries=0
+        retries = 0
         while self.run:
-            retries+=1
+            retries += 1
             if retries > 3:
                 self.log("Stopped after 3 attempts, disconnecting...")
                 break
@@ -384,16 +388,13 @@ class Mario:
                             LEGO_CHARACTERISTIC_UUID,
                             SUBSCRIBE_PANTS_COMMAND)
 
-                        client.is_connected # wait for connection
-
                         asyncio.get_event_loop().create_task(
                             self.check_connection_loop())
 
-                        # change volume to provided default
                         if not self.default_volume is None: 
                             self.set_volume(self.default_volume)
                         return True
-                    except Exception as ex:  # pylint: disable=broad-except
+                    except Exception as ex:
                         self.log(f"Error connecting: {ex}")
                         await self.disconnect()
                         return False
@@ -421,7 +422,7 @@ class Mario:
                 command[3] = port
                 command = bytearray(command)
                 await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
-                                                    command)
+                                                  command)
             except (OSError, BleakError):
                 self.log("Connection error while requesting port value")
                 await self.disconnect()
@@ -446,7 +447,7 @@ class Mario:
                 self.log("Connection error while setting volume")
                 asyncio.get_event_loop().create_task(self.disconnect())
 
-    def port_setup(self, port: int, mode: int, notifications: bool= True) -> None:
+    async def port_setup(self, port: int, mode: int, notifications: bool= True) -> None:
         """Configures the settings of one of Mario's ports.
         Sends a message to Mario that configures the way one of its ports
         communicates.
@@ -470,15 +471,15 @@ class Mario:
             new values of the port. Defaults to True.
             If False, you'll need to manually request port values.
         """
+        await self.await_connection()
         if self.client:
             try:
                 command = pifs_command(port, mode, notifications)
-                asyncio.get_event_loop().create_task(
-                    self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
-                                                 command))
+                await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
+                                                  command)
             except (OSError, BleakError):
                 self.log("Connection error while setting up port")
-                asyncio.get_event_loop().create_task(self.disconnect())
+                await self.disconnect()
 
     async def check_connection_loop(self) -> None:
         while self.client:
@@ -528,10 +529,18 @@ class Mario:
             return self.client.is_connected
         return False
 
+    def __str__(self) -> str:
+        if self.is_connected:
+            return f"Mario at {self.client.address}"
+        else:
+            return "Mario - not connected"
+
 def signed(char):
     return char - 256 if char > 127 else char
 
 def run():
+    """Runs the asyncio event loop until until all tasks are done.
+    """
     while asyncio.all_tasks(loop=asyncio.get_event_loop()):
         asyncio.get_event_loop().run_until_complete(asyncio.gather(
             *asyncio.all_tasks(loop=asyncio.get_event_loop())))
