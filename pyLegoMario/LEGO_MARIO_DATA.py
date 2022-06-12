@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 # hex to ground colors
-# color messages are always shape (hexadecimal): 08004501ffffxx00 (where xx is the color code)
+# color messages are always shape (hexadecimal): 08004501ffffxx00
+# (where xx is the color code)
 HEX_TO_COLOR_TILE = {
     0x0c: "Purple",
     0x13: "White",
@@ -15,7 +16,8 @@ HEX_TO_COLOR_TILE = {
     0x6a: "Brown"}
 
 # hex to Lego RGB codes
-# code messages are always shape (hexadecimal): 08004501xx00ffff (where xx is the tile code)
+# code messages are always shape (hexadecimal): 08004501xx00ffff
+# (where xx is the tile code)
 with open(Path(__file__).parent / Path("ALL_RGB_CODES.json")) as f:
     HEX_TO_RGB_TILE = {x[2]:x[1] for x in json.load(f)}
 
@@ -94,18 +96,9 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
     Returns:
         bytearray: A bytearray to be sent to Lego Mario
     """
-    # Input Validation
-    # Port
     if port not in (0,1,2,3,4):
         raise ValueError(f"Invalid Port, expected one of (0,1,2,3,4) but got {port}")
-    # Mode
-
-    try:
-        mode = int(mode)
-    except (TypeError, ValueError) as e:
-        raise TypeError(f"Mode must be castable to int, got {type(mode)} \
-                        instead") from e
-    if mode not in VALID_PORT_MODES[port]: # not using .get because I verified port above
+    if mode not in VALID_PORT_MODES[port]:
         raise ValueError(
             f"Invalid mode {mode} for port {port}, allowed modes for this \
             port are: {VALID_PORT_MODES[port]}.")
