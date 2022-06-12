@@ -2,8 +2,12 @@ import tkinter as tk
 from pathlib import Path
 import asyncio
 from PIL import ImageTk, Image
-from .mario import Mario
-from .LEGO_MARIO_DATA import *
+try:
+    from .mario import Mario
+    from .LEGO_MARIO_DATA import *
+except ImportError:
+    from mario import Mario
+    from LEGO_MARIO_DATA import *
 
 class MarioWindow(tk.Frame):
     def __init__(self, mario_entity: Mario, master=None):
@@ -133,7 +137,7 @@ class MarioWindow(tk.Frame):
         self.notificationCheckBox.grid(column=1, row=0)
 
         # OptionMenu for port modes
-        self.port_mode_variable = tk.StringVar(self)
+        self.port_mode_variable = tk.IntVar(self)
         options = ("0","1")
         self.mode_menu = tk.OptionMenu(self.portFormatFrame,
                                         self.port_mode_variable,
@@ -186,9 +190,12 @@ class MarioWindow(tk.Frame):
             self.port_mode_variable.set("0")
 
     def set_port_input_format(self) -> None:
-        self.mario.port_setup(port=self.portVar.get(), 
-                              mode=self.port_mode_variable.get(),
-                              notifications=self.notificationVar.get())
+        task = self.mario.port_setup(
+            port=self.portVar.get(),
+            mode=self.port_mode_variable.get(),
+            notifications=self.notificationVar.get())
+        asyncio.create_task(task)
+
 
     def dis_connect_mario(self) -> None:
         """Connects Mario if Mario isn't running. Disconnect Mario if Mario is
@@ -338,6 +345,6 @@ class MarioWindow(tk.Frame):
                 self.update()
                 await asyncio.sleep(interval)
         except tk.TclError as e:
-            self.quit() # even in case of crash or closed window, remove Mario's event hooks
+            self.quit()  # even in case of crash or closed window, remove Mario's event hooks
             if "application has been destroyed" not in e.args[0] and "invalid command name" not in e.args[0]:
                 print(e.args) # debug
