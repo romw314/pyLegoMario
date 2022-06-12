@@ -30,6 +30,37 @@ def pants_callback(mario: Mario, powerup: str):
     event = pygame.event.Event(PANTS_EVENT, value=powerup, sender=mario)
     pygame.event.post(event)
 
+class AsyncClock():
+    """Use this instead of pygame.time.Clock when using Lego Mario.
+    Your AsyncClock object's tick method must be called once per frame,
+    otherwise Mario cannot send events.
+    """
+    def __init__(self) -> None:
+        self.clock = pygame.time.Clock()
+        self.get_time = self.clock.get_time
+        self.get_rawtime = self.clock.get_rawtime
+        self.get_fps = self.clock.get_fps
+        self._tick = self.clock.tick
+        self.loop = asyncio.get_event_loop()
+        self._tick_busy_loop = self.clock.tick_busy_loop
+    
+    def tick(self, framerate: int = 0) -> int:
+        """Limits framerate by blocking, but uses spare time for async loop.
+
+        Args:
+            framerate (int, optional): Maximum desired framerate. If 0 or not
+                provided, will not delay. Defaults to 0.
+
+        Returns:
+            int: The number of milliseconds since last call.
+        """
+        self.loop.run_until_complete(asyncio.sleep(0.01))
+        return self._tick(framerate)
+
+    def tick_busy_loop(self, framerate: int = 0) -> int:
+        self.loop.run_until_complete(asyncio.sleep(0.01))
+        return self._tick_busy_loop(framerate)
+
 class PygameMario(Mario):
     def __init__(self, enable_acc_events: bool = True,
                  enable_rgb_events: bool = True,
@@ -57,7 +88,7 @@ class PygameMario(Mario):
         super().__init__(False, default_volume=volume)
         ports_task = self.init_ports(enable_acc_events, enable_rgb_events,
                                      enable_pants_events)
-        asyncio.create_task(ports_task)
+        asyncio.get_event_loop().create_task(ports_task)
 
     async def init_ports(self, acc_enabled: bool, rgb_enabled: bool,
                          pants_enabled: bool) -> None:
@@ -76,21 +107,18 @@ class PygameMario(Mario):
             await self.port_setup(2, 0, False)
 
 # if you write your own game file, you'll need to use the following import
-# from pyLegoMario import PygameMario, ACC_EVENT, RGB_EVENT, PANTS_EVENT
-async def run_window():
+# from pyLegoMario import PygameMario, ACC_EVENT, RGB_EVENT, PANTS_EVENT, AsyncClock
+def main():
     pygame.init()
     window = pygame.display.set_mode((1500,800))
-    clock = pygame.time.Clock()
+    clock = AsyncClock()
     mario = PygameMario(volume=30)
     hspeed = vspeed = 0
     player = pygame.draw.rect(window, (255,255,255), (600,300,100,100))
     while True:
-        await asyncio.sleep(0.01)
         clock.tick(60)
         for event in pygame.event.get():
-            print(event)
             if event.type == QUIT:
-                await mario.disconnect()
                 pygame.quit()
                 sys.exit()
             elif event.type == ACC_EVENT:
@@ -106,6 +134,5 @@ async def run_window():
         pygame.draw.rect(window, (255,255,255), player)
         pygame.display.update()
 
-
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(run_window())
+    main()
