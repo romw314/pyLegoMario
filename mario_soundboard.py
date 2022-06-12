@@ -1,7 +1,6 @@
 """
-mairo_soundboard.py
-This is a sample on how to use mario.py. It shows how to register event hook 
-functions and how to let the script run as an endless loop.
+mario_soundboard.py
+This script uses legoMario to create a soundboard by scanning rgb codes.
 ###################################################################################
 MIT License
 Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
@@ -40,7 +39,8 @@ async def register_sounds(
 
     Args:
         mario (Mario): Instance of Lego Mario that's used for scanning.
-        sounds (dict[str, list[sf.SoundFile]]): Dictionary of file or directory names assigned to lists of sound files.
+        sounds (dict[str, list[sf.SoundFile]]): Dictionary of file or 
+            directory names assigned to lists of sound files.
 
     Returns:
         dict[str, str]: A mapping of tile names to sound file or directory names.
@@ -56,7 +56,10 @@ async def register_sounds(
             mario.log(f"Imported {tile_name}: {sound_name}")
         else:
             # drop invalid setting by saving copy without that mapping
-            mario.log(f"Invalid setting: file {sound_name} not found. Setting deleted.")
+            mario.log(f"Invalid setting: file {sound_name} not found. "
+                       "Setting deleted.")
+
+    await mario.await_connection()
 
     for sound_name, sound_list in sounds.items():
         # check if already registered from settings
@@ -167,7 +170,6 @@ if __name__ == "__main__":
     # Initialize Mario
     mario = Mario(True, default_volume=0)
     MarioWindow(mario)
-    
     settings = load_settings()
     try:
         device = settings["device"]
