@@ -1,0 +1,3 @@
+include pyLegoMario/icon.ico
+include pyLegoMario/background.png
+include pyLegoMario/ALL_RGB_CODES.json

@@ -6,6 +6,8 @@ game loop with asyncio (which is needed to play with Mario).
 Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
 """
 import sys
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame.locals import *
 try:

@@ -451,7 +451,8 @@ class Mario:
                 self.log("Connection error while setting volume")
                 asyncio.get_event_loop().create_task(self.disconnect())
 
-    async def port_setup(self, port: int, mode: int, notifications: bool= True) -> None:
+    async def port_setup(self, port: int, mode: int,
+                         notifications: bool= True) -> None:
         """Configures the settings of one of Mario's ports.
         Sends a message to Mario that configures the way one of its ports
         communicates.

@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import asyncio
 import vgamepad as vg
 from pyLegoMario import *
 from typing import Union, Callable
@@ -40,23 +39,15 @@ def acc_to_float(number: int) -> float:
     return min(max(number/18, -1), 1)
 
 class MarioController(Mario):
-    def __init__(self, 
-                doLog: bool=True, 
-                accelerometerEventHooks: Union[Callable, list]=None,
-                tileEventHooks: Union[Callable, list]=None, 
-                pantsEventHooks: Union[Callable, list]=None, 
-                logEventHooks: Union[Callable, list]=None,
-                defaultVolume: Union[int, None]=None
-                ) -> None:
+    def __init__(self) -> None:
 
-        super().__init__(doLog, accelerometerEventHooks, tileEventHooks,
-                        pantsEventHooks, logEventHooks, defaultVolume)
-        self.add_accelerometer_hooks(accHandling)
-        self.add_tile_hooks(rgbHandling)
+        super().__init__(True, default_volume=0)
+        self.add_accelerometer_hooks(_accHandling)
+        self.add_tile_hooks(_rgbHandling)
         self.gamepad = vg.VX360Gamepad()
         self.y_cache=[] #  cache of length 5 to store recent y accelerations
 
-def rgbHandling(sender: MarioController, t: str) -> None:
+def _rgbHandling(sender: MarioController, t: str) -> None:
     """
     Test Function which will be called as soon as a tile is detected by Mario.
     t will contain the Name of the tile that was deteced.
@@ -67,7 +58,7 @@ def rgbHandling(sender: MarioController, t: str) -> None:
         sender.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
     sender.gamepad.update()
 
-def accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
+def _accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
     # jumping and movement handling
     if y > LARGE and not "large" in sender.y_cache:
         sender.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_A)
@@ -109,5 +100,5 @@ if __name__ == "__main__":
     print("Turn on Mario and press Bluetooth Button")
     controller = MarioController(False, defaultVolume=0)
     
-    #MarioWindow(controller)
+    # MarioWindow(controller)
     run()
