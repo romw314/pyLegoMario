@@ -12,7 +12,7 @@ setup(
     author_email='jamin.kauf@yahoo.de',
     description='Module for handling connections with the Lego Mario toy',
     packages=find_packages(),
-    install_requires=['bleak', 'pathlib', 'asyncio', 'pillow'],
+    install_requires=['bleak', 'pathlib', 'asyncio', 'pillow', 'pygame'],
     keywords=['lego', 'python', 'super mario', 'lego mario', 'bluetooth'],
     classifiers=[
         'Development Status :: Done',
