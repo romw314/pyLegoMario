@@ -11,6 +11,7 @@ setup(
     author='Jamin Kauf, Bruno Hautzenberger',
     author_email='jamin.kauf@yahoo.de',
     description='Module for handling connections with the Lego Mario toy',
+    long_description_content_type='text/markdown',
     long_description=long_description,
     packages=find_packages(),
     install_requires=['bleak', 'pathlib', 'asyncio', 'pillow', 'pygame'],
