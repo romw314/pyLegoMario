@@ -1,5 +1,12 @@
 import json
 from pathlib import Path
+
+# hex to Lego RGB codes
+# code messages are always shape (hexadecimal): 08004501xx00ffff
+# (where xx is the tile code)
+with open(Path(__file__).parent / Path("ALL_RGB_CODES.json")) as f:
+    HEX_TO_RGB_TILE = {x[2]:x[1] for x in json.load(f)}
+
 # hex to ground colors
 # color messages are always shape (hexadecimal): 08004501ffffxx00
 # (where xx is the color code)
@@ -14,12 +21,6 @@ HEX_TO_COLOR_TILE = {
     0x38: "Nougat Brown",
     0x42: "Cyan",
     0x6a: "Brown"}
-
-# hex to Lego RGB codes
-# code messages are always shape (hexadecimal): 08004501xx00ffff
-# (where xx is the tile code)
-with open(Path(__file__).parent / Path("ALL_RGB_CODES.json")) as f:
-    HEX_TO_RGB_TILE = {x[2]:x[1] for x in json.load(f)}
 
 # hex to pants codes
 HEX_TO_PANTS = {        # Pins
@@ -64,11 +65,11 @@ HEX_TO_HUB_PROPERTIES = {
 LEGO_CHARACTERISTIC_UUID = "00001624-1212-efde-1623-785feabcd123"
 # Request Commmands
 REQUEST_RGB_COMMAND = bytearray([
-                                0x05, # message length
-                                0x00, # unused
-                                0x21, # message type (21=Port Information Request)
-                                0x01, # port ID
-                                0x00  # requested information type (0=Port Value)
+                                0x05,  # message length
+                                0x00,  # unused
+                                0x21,  # message type (21=Port Information Request)
+                                0x01,  # port ID
+                                0x00   # requested information type (0=Port Value)
                                 ])
 REQUEST_PANTS_COMMAND = bytearray([0x05, 0x00, 0x21, 0x02, 0x00])
 REQUEST_IMU_COMMAND = bytearray([0x05, 0x00, 0x21, 0x00, 0x00])
@@ -86,18 +87,23 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
                 Port 2: Binary (Pants)
                 Port 3: ??
                 Port 4: ??
-    mode (int): The mode to set the port to. Available modes: Port 0: (0,1), Port 1: (0,1), Port 2: (0), Port 3: (0,1,2,3), Port 4: (0,1). Also see https://github.com/bricklife/LEGO-Mario-Reveng
-    notifications (bool, optional): Whether to receive updates about every new value of the port. Defaults to True. If False, you'll need to manually request port values.
-    delta_interval (int, optional): The necessary change in measured data to trigger a change in the sent value.
-                                    A higher delta interval leads to less accurate data, but also less data traffic via bluetooth.
-                                    I recommend 1 for every port except Port 0, which I recommend to set between 1 and 5 depending on your machine.
-                                    Defaults to 1.
+    mode (int): The mode to set the port to. Available modes:
+        Port 0: (0,1), Port 1: (0,1), Port 2: (0), Port 3: (0,1,2,3),
+        Port 4: (0,1). Also see https://github.com/bricklife/LEGO-Mario-Reveng
+    notifications (bool, optional): Whether to receive updates about every new
+        value of the port. Defaults to True. If False, you'll need to manually
+        request port values.
+    delta_interval (int, optional): The necessary change in measured data to
+        trigger a change in the sent value. A higher delta interval leads to
+        less accurate data, but also less data traffic via bluetooth. I
+        recommend 1 for every port except Port 0, which I recommend to set
+        between 1 and 5 depending on your machine. Defaults to 1.
 
     Returns:
         bytearray: A bytearray to be sent to Lego Mario
     """
     if port not in (0,1,2,3,4):
-        raise ValueError(f"Invalid Port, expected one of (0,1,2,3,4) but got {port}")
+        raise ValueError(f"Invalid Port, expected one of (0,1,2,3,4) got {port}")
     if mode not in VALID_PORT_MODES[port]:
         raise ValueError(
             f"Invalid mode {mode} for port {port}, allowed modes for this \
@@ -123,7 +129,7 @@ def pifs_command(port: int, mode: int, notifications: bool = True, delta_interva
                     ])
 
 # Subscribtion Commands
-SUBSCRIBE_IMU_COMMAND =  pifs_command(0, 0, delta_interval=2)
+SUBSCRIBE_IMU_COMMAND = pifs_command(0, 0, delta_interval=2)
 SUBSCRIBE_RGB_COMMAND = pifs_command(1, 0, delta_interval=1)
 SUBSCRIBE_PANTS_COMMAND = pifs_command(2, 0)
 
