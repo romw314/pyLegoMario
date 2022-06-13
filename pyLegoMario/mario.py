@@ -24,21 +24,23 @@ import asyncio
 from typing import Any, Callable, Iterable, Union
 from bleak import BleakScanner, BleakClient, BleakError
 try:
-    from .LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
+    from .lego_mario_data import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
         HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
         LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
         SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
         MUTE_COMMAND, REQUEST_RGB_COMMAND)
 except ImportError:
-    from LEGO_MARIO_DATA import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
-    HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
-    LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
-    SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
-    MUTE_COMMAND, REQUEST_RGB_COMMAND)
+    from lego_mario_data import (HEX_TO_RGB_TILE, HEX_TO_COLOR_TILE, HEX_TO_PANTS,
+        HEX_TO_HUB_ACTIONS, HEX_TO_HUB_PROPERTIES, BINARY_GESTURES,
+        LEGO_CHARACTERISTIC_UUID, SUBSCRIBE_IMU_COMMAND, SUBSCRIBE_PANTS_COMMAND,
+        SUBSCRIBE_RGB_COMMAND, DISCONNECT_COMMAND, pifs_command, TURN_OFF_COMMAND,
+        MUTE_COMMAND, REQUEST_RGB_COMMAND)
 
 
 class Mario:
     """Object to control and monitor a Lego Mario via Bluetooth.
+    Add callback functions via the .add_***_hook methods.
+    Then call run() or keep an asyncio event loop running manually.
     """
     def __init__(self,
                 do_log: bool=True,
@@ -145,7 +147,8 @@ class Mario:
         """Adds function(s) as event hooks for updated tile or color values.
 
         Args:
-            funcs (function or list of functions): functions take (Mario, str) as input.
+            funcs (func or list of functions): callback functions must take
+                (Mario, str) as input.
         """
         if callable(funcs):
             self._log_event_hooks.append(funcs)
@@ -162,7 +165,8 @@ class Mario:
         """Adds function(s) as event hooks for updated tile or color values.
 
         Args:
-            funcs (func or list of functions): functions take (Mario, str) as input.
+            funcs (func or list of functions): callback functions must take
+                (Mario, str) as input.
         """
         if callable(funcs):
             self._tile_event_hooks.append(funcs)
@@ -179,8 +183,8 @@ class Mario:
         """Adds function(s) as event hooks for updated accelerometer values.
 
         Args:
-            funcs (function or list of functions): functions take input as
-            (Mario, int, int, int).
+            funcs (function or list of functions): callback function(s) take
+            input as (Mario, int, int, int).
         """
         if callable(funcs):
             self._accelerometer_hooks.append(funcs)
@@ -197,8 +201,8 @@ class Mario:
         """Adds function(s) as event hooks for updated pants values.
 
         Args:
-            funcs (func or list of functions): function or list of functions
-                Function must take Mario and string as input.
+            funcs (func or list of functions): callback function(s) take
+                input as (Mario, str).
         """
         if callable(funcs):
             self._pants_event_hooks.append(funcs)
@@ -389,7 +393,7 @@ class Mario:
                             SUBSCRIBE_PANTS_COMMAND)
 
                         asyncio.get_event_loop().create_task(
-                            self.check_connection_loop())
+                            self._check_connection_loop())
 
                         if not self.default_volume is None: 
                             self.set_volume(self.default_volume)
@@ -481,7 +485,7 @@ class Mario:
                 self.log("Connection error while setting up port")
                 await self.disconnect()
 
-    async def check_connection_loop(self) -> None:
+    async def _check_connection_loop(self) -> None:
         while self.client:
             try:
                 if not self.client.is_connected:

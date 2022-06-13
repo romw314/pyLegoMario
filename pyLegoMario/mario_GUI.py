@@ -1,18 +1,32 @@
+from typing import Union
 import tkinter as tk
 from pathlib import Path
 import asyncio
 from PIL import ImageTk, Image
 try:
     from .mario import Mario
-    from .LEGO_MARIO_DATA import *
+    from .lego_mario_data import *
 except ImportError:
     from mario import Mario
-    from LEGO_MARIO_DATA import *
+    from lego_mario_data import *
 
 class MarioWindow(tk.Frame):
-    def __init__(self, mario_entity: Mario, master=None):
+    """Object that creates a GUI for Lego Mario.
+    """
+    def __init__(self, mario_entity: Mario,
+                 master: Union[tk.Widget, None] = None) -> None:
+        """
+
+        Args:
+            mario_entity (Mario): Instance of Lego Mario to create the GUI for
+            master (_type_, optional): parent tkinter widget. Uses current
+                new Toplevel otherwise. Defaults to None.
+        """
         self.mario = mario_entity
-        tk.Frame.__init__(self, tk.Toplevel() if tk._default_root else master)
+        if master:
+            tk.Frame.__init__(self, master)
+        else:
+            tk.Frame.__init__(self, tk.Toplevel() if tk._default_root else None)
         # Window Setup
         self.master.minsize(644, 165)
         self.master.iconbitmap(Path(__file__).parent / "icon.ico")
@@ -49,7 +63,7 @@ class MarioWindow(tk.Frame):
         self.y_acceleration_box.grid(row=1, column=1)
         self.z_acceleration_box.grid(row=1, column=2)
         # Hook Fields to Mario
-        self.mario.add_accelerometer_hooks(self.input_acceleration_data)
+        self.mario.add_accelerometer_hooks(self._input_acceleration_data)
         # End Acceleration Data
 
         # Start Pants Data
@@ -57,38 +71,39 @@ class MarioWindow(tk.Frame):
         self.pants_frame = tk.Frame(self)
         self.pants_label = tk.Label(self.pants_frame, text="Pants")
         # Variable and Entry for Displaying Variable
-        self.pants_text = tk.StringVar()
-        self.pants_box = tk.Entry(self.pants_frame, 
-                                width=len(max(HEX_TO_PANTS.values(), key=len)),
-                                state="readonly", textvariable=self.pants_text)
+        self.pants_text_var = tk.StringVar()
+        box_width = max([len(powerup) for powerup in HEX_TO_PANTS.values()])
+        self.pants_box = tk.Entry(self.pants_frame, width=box_width,
+                                  state="readonly",
+                                  textvariable=self.pants_text_var)
         
         self.pants_frame.grid(row=0, column=2)
         self.pants_label.grid(row=0)
         self.pants_box.grid(row=1)
         # Hook Field to Mario
-        self.mario.add_pants_hooks(self.input_pants_data)
+        self.mario.add_pants_hooks(self._input_pants_data)
         # End Pants Data
 
         # Start RGB Data
-        self.rgbFrame = tk.Frame(self)
-        self.rgbLabel = tk.Label(self.rgbFrame, text="RGB/Tile")
-        self.rgbText = tk.StringVar()
+        self.rgb_frame = tk.Frame(self)
+        self.rgb_label = tk.Label(self.rgb_frame, text="RGB/Tile")
+        self.rgb_text = tk.StringVar()
         possible_values = (HEX_TO_RGB_TILE | HEX_TO_COLOR_TILE).values()
-        max_length = max([len(x) for x in possible_values])
-        self.rgbBox = tk.Entry(self.rgbFrame, width=max_length,
-                                state='readonly', textvariable=self.rgbText)
-        self.rgbFrame.grid(row=0, column=1)
-        self.rgbLabel.grid(row=0)
-        self.rgbBox.grid(row=1)
+        box_width = max([len(value) for value in possible_values])
+        self.rgb_box = tk.Entry(self.rgb_frame, width=box_width,
+                               state='readonly', textvariable=self.rgb_text)
+        self.rgb_frame.grid(row=0, column=1)
+        self.rgb_label.grid(row=0)
+        self.rgb_box.grid(row=1)
         # Hook Field to Mario
-        self.mario.add_tile_hooks(self.input_rgb_data)
+        self.mario.add_tile_hooks(self._input_rgb_data)
         # End RGB Data
 
         # Scale for Adjusting Volume
         self.volumeFrame = tk.Frame(self, bg="#5c94fc")
         self.volumeScale = tk.Scale(self.volumeFrame,
                                     from_=0, to=100, orient=tk.HORIZONTAL,
-                                    command=self.set_mario_volume,
+                                    command=self._set_mario_volume,
                                     label="Volume", highlightthickness=0)
         self.volumeFrame.grid(row=0, column=3)
         self.volumeScale.grid(row=0, column=0)
@@ -97,7 +112,7 @@ class MarioWindow(tk.Frame):
         self.logText = tk.StringVar()
         self.logBox = tk.Text(self, state=tk.DISABLED, width=80)
         self.logBox.grid(row=1, columnspan=6, sticky=tk.NSEW)
-        self.mario.add_log_hooks(self.input_log_data)
+        self.mario.add_log_hooks(self._input_log_data)
 
         # Start Buttons
         # Button Container
@@ -107,22 +122,22 @@ class MarioWindow(tk.Frame):
 
         # This Button will also handle disconnecting
         self.connectButton = tk.Button(self.buttonFrame, text="Connect",
-                                        command=self.dis_connect_mario)
+                                       command=self._dis_connect_mario)
         self.connectButton.grid(row=0, column=0)
 
         self.quit_button = tk.Button(self.buttonFrame, text='Quit',
-                                    command=self.quit)
+                                     command=self.quit)
         self.quit_button.grid(row=0, column=1)
 
         self.turnOffButton = tk.Button(self.buttonFrame, text="Turn Off",
-                                        command=self.turn_mario_off)
+                                       command=self._turn_mario_off)
         self.turnOffButton.grid(row=0, column=2)
         # End Buttons
 
         # Checkbox for AutoReconnect
         self.reconnectVar = tk.IntVar(self, value=1) 
         self.reconnectCheckBox = tk.Checkbutton(self, text="Auto-Reconnect",
-            variable=self.reconnectVar, command=self.set_auto_reconnect)
+            variable=self.reconnectVar, command=self._set_auto_reconnect)
         self.reconnectCheckBox.grid(row=2, column=2)
 
         # Frame for port formatting
@@ -149,7 +164,7 @@ class MarioWindow(tk.Frame):
         # Button for configuring port format
         self.portFormatButton = tk.Button(self.portFormatFrame, 
                                         text="Update Port", 
-                                        command=self.set_port_input_format)
+                                        command=self._set_port_input_format)
         self.portFormatButton.grid(column=2, row=0)
 
         # Request Port Values
@@ -158,21 +173,21 @@ class MarioWindow(tk.Frame):
         self.portFrame = tk.Frame(self)
         # Button to Request Value
         self.request_port_button = tk.Button(self.portFrame, 
-            text="Request Value", command=self.request_port)
+            text="Request Value", command=self._request_port)
         # Radiobutton for Each Port (Grid All to portFrame)
         # no Port 0/5 (accelerometer isn't printed to Log, Port 5 doesn't exist)
         for i, port in enumerate((1,2,3,4,6)):
-            radiobutton = tk.Radiobutton(self.portFrame, 
-                            variable=self.portVar, value=port,
-                            text=f"Port {port}", command=self.update_mode_menu)
+            radiobutton = tk.Radiobutton(
+                self.portFrame, variable=self.portVar, value=port,
+                text=f"Port {port}", command=self._update_mode_menu)
             radiobutton.grid(row=i // 3, column=i % 3)
         self.portFrame.grid(row=2, column=3)
         self.request_port_button.grid(row=1, column=2)
 
         # display and update the window
-        asyncio.get_event_loop().create_task(self.run_window())
+        asyncio.get_event_loop().create_task(self._run_window())
 
-    def update_mode_menu(self) -> None:
+    def _update_mode_menu(self) -> None:
         """Update the port mode menu with the available port modes for the
         selected port. Called every time a different port gets selected.
         """
@@ -185,11 +200,11 @@ class MarioWindow(tk.Frame):
                 label=str(choice), 
                 command=tk._setit(self.port_mode_variable, str(choice)))
 
-        # only reset selection if previously selected mode is not valid
+        # only reset selection if previously selected mode isn't valid anymore
         if not int(self.port_mode_variable.get()) in new_choices:
             self.port_mode_variable.set("0")
 
-    def set_port_input_format(self) -> None:
+    def _set_port_input_format(self) -> None:
         task = self.mario.port_setup(
             port=self.portVar.get(),
             mode=self.port_mode_variable.get(),
@@ -197,7 +212,7 @@ class MarioWindow(tk.Frame):
         asyncio.create_task(task)
 
 
-    def dis_connect_mario(self) -> None:
+    def _dis_connect_mario(self) -> None:
         """Connects Mario if Mario isn't running. Disconnect Mario if Mario is
         connected. Passes otherwise (e.g. running but not connected yet)
         """
@@ -206,35 +221,35 @@ class MarioWindow(tk.Frame):
         elif self.mario.client:
             asyncio.create_task(self.mario.disconnect())
 
-    def set_mario_volume(self, placeholder):
+    def _set_mario_volume(self, new_volume: str):
         """Creates asyncio task of Mario's set_volume Coroutine.
-        The new volume is the current value of self.volumeVar (set by the volumeScale).
+        The new volume is the current value of self.volumeVar
+        (set by the volumeScale).
 
         Args:
-            placeholder (any): This argument is NOT used! It exists only for
-                compatibility with tk.Scale's way of calling its command.
+            new_volume (str): the new volume as provided by tk.Scale
         """
-        self.mario.default_volume = int(placeholder)
+        self.mario.default_volume = int(new_volume)
         self.mario.set_volume(self.mario.default_volume)
     
-    def set_auto_reconnect(self):
+    def _set_auto_reconnect(self):
         """Sets Mario's ._autoReconnect attribute to the current value of 
         self.reconnectVar (determined by self.reconnectCheckBox)."""
         self.mario.auto_reconnect = bool(self.reconnectVar.get())
 
-    def turn_mario_off(self):
+    def _turn_mario_off(self):
         """Creates asyncio task of Mario's .turn_off() Coroutine.
         """
         asyncio.create_task(self.mario.turn_off())
 
-    def request_port(self) -> None:
+    def _request_port(self) -> None:
         """Requests the currently selected port of Mario.
         """
         port_id = self.portVar.get()
         loop = asyncio.get_event_loop()
         loop.create_task(self.mario.request_port_value(port_id))
 
-    def input_log_data(self, sender: Mario, msg: str) -> None:
+    def _input_log_data(self, sender: Mario, msg: str) -> None:
         """Function to display log messages in GUI
 
         Args:
@@ -245,18 +260,20 @@ class MarioWindow(tk.Frame):
         assert sender == self.mario
         try:
             content, hex_msg = msg.split(", Hex: ")
-            msg = f"{content.ljust(self.logBox['width'] - len(hex_msg))}{hex_msg}"
+            padded_width = self.logBox['width'] - len(hex_msg)
+            msg = f"{content.ljust(padded_width)}{hex_msg}"
         except ValueError:
             # unable to split/format: leave message untouched
             pass
         # Insert Message Into Log Textbox (excluding acceleration data)
-        if not msg.startswith("X: "):  # and "port 3" in msg.lower()
+        if not msg.startswith("X: "):
             self.logBox['state'] = tk.NORMAL
             self.logBox.insert(tk.END, f"\n{msg}")
             self.logBox['state'] = tk.DISABLED
             self.logBox.see(tk.END)  # scroll down
 
-    def input_acceleration_data(self, sender: Mario, x: int, y: int, z: int) -> None:
+    def _input_acceleration_data(self, sender: Mario,
+                                 x: int, y: int, z: int) -> None:
         """Hook for acceleration data to be displayed on GUI
 
         Args:
@@ -271,27 +288,29 @@ class MarioWindow(tk.Frame):
         self.y_acceleration_text.set(str(y))
         self.z_acceleration_text.set(str(z))
 
-    def input_pants_data(self, sender: Mario, pants: str) -> None:
+    def _input_pants_data(self, sender: Mario, pants: str) -> None:
         """Hook for pants data to be displayed on GUI
 
         Args:
             sender (Mario): The Mario entity that sends the data.
                 Only used for compatibility with mario's event hooks.
-            pants (str): The type of pants mario is wearing. See LEGO_MARIO_DATA.py for more info
+            pants (str): The type of pants mario is wearing. See
+                LEGO_MARIO_DATA.py for more info
         """
         assert sender == self.mario
-        self.pants_text.set(pants)
+        self.pants_text_var.set(pants)
 
-    def input_rgb_data(self, sender: Mario, color_or_tile: str) -> None:
+    def _input_rgb_data(self, sender: Mario, color_or_tile: str) -> None:
         """Hook for rgb/tile data to be displayed on GUI
 
         Args:
-            sender (Mario): The Mario entity that sends the data. 
+            sender (Mario): The Mario entity that sends the data.
                 Only used for compatibility with mario's event hooks.
-            color_or_tile (str): String of the color or tile. See LEGO_MARIO_DATA.py for more info
+            color_or_tile (str): String of the color or tile.
+                See LEGO_MARIO_DATA.py for more info
         """
         assert sender == self.mario
-        self.rgbText.set(color_or_tile)
+        self.rgb_text.set(color_or_tile)
 
     def quit(self) -> None:
         """Destroys the window and removes Mario's event hooks. 
@@ -299,8 +318,8 @@ class MarioWindow(tk.Frame):
         """
         # Remove Hooks from Mario
         self.mario.remove_hooks((
-            self.input_acceleration_data, self.input_pants_data, 
-            self.input_rgb_data, self.input_log_data))
+            self._input_acceleration_data, self._input_pants_data, 
+            self._input_rgb_data, self._input_log_data))
         self.mario.auto_reconnect = False
         # Close Window
         try:
@@ -308,7 +327,7 @@ class MarioWindow(tk.Frame):
         except tk.TclError as e:
             pass
 
-    async def run_window(self, interval: float = 0.06) -> None:
+    async def _run_window(self, interval: float = 0.05) -> None:
         """Endless loop that keeps the window running, updating it every
         INTERVAL seconds.\n
         This loop is also responsible for enabling and disabling GUI functions
@@ -316,7 +335,7 @@ class MarioWindow(tk.Frame):
 
         Args:
             interval (float, optional): Time interval between window updates.
-            Defaults to 0.06.
+            Necessary to handle Mario. Defaults to 0.05.
         """
         try:
             while True:
@@ -345,6 +364,6 @@ class MarioWindow(tk.Frame):
                 self.update()
                 await asyncio.sleep(interval)
         except tk.TclError as e:
-            self.quit()  # even in case of crash or closed window, remove Mario's event hooks
+            self.quit()  # remove event hooks in case of crash
             if "application has been destroyed" not in e.args[0] and "invalid command name" not in e.args[0]:
-                print(e.args) # debug
+                print(e.args)  # debug
