@@ -27,7 +27,7 @@ from pyLegoMario import Mario, MarioWindow, run
 from pathlib import Path
 import soundfile as sf
 import sounddevice as sd
-from pyLegoMario.LEGO_MARIO_DATA import HEX_TO_RGB_TILE
+from pyLegoMario.lego_mario_data import HEX_TO_RGB_TILE
 import pyinputplus as pyip
 
 

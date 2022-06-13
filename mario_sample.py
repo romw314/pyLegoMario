@@ -1,5 +1,5 @@
 """
-SAMPLE.PY
+sample.py
 This is a sample on how to use mario.py. It shows how to register event hook 
 functions and how to let the script run as an endless loop.
 ###################################################################################
@@ -54,9 +54,9 @@ if __name__ == "__main__":
         accelerometer_hooks=my_accelerometer_hook, 
         tile_event_hooks=my_tile_hook)
     """Add Event Hooks in constructor (above) or manually (below).
-    Event hooks are functions to be called every time Mario 
+    Event hooks are functions to be called every time Mario
     sends data of a certain kind.
-    The functions in this example don't do anything. 
+    The functions in this example don't do anything.
     Try inserting a print call."""
     mario.add_pants_hooks(my_pants_hook)
     # create GUI window
