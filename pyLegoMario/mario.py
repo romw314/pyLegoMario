@@ -362,7 +362,11 @@ class Mario:
                 self.log("Stopped after 3 attempts, disconnecting...")
                 break
             self.log("Searching for device...")
-            devices = await BleakScanner.discover()
+            try:
+                devices = await BleakScanner.discover()
+            except OSError as e:
+                raise OSError("Can't use device - make sure your device"
+                              f" supports Bluetooth and turn it on.\n{e}")
             for d in devices:
                 if d.name and (
                     d.name.lower().startswith("lego luigi")
