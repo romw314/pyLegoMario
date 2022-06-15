@@ -39,8 +39,57 @@ except ImportError:
 
 class Mario:
     """Object to control and monitor a Lego Mario via Bluetooth.
-    Add callback functions via the .add_***_hook methods.
-    Then call run() or keep an asyncio event loop running manually.
+
+    Attributes
+    ----------
+    do_log: bool
+        If True, log messages will be printed to stdout.
+    pants: str | None
+        Value of most recent pants value
+    ground: str | None
+        Value of most recent camera/rgb value
+    acceleration: tuple[int, int, int] | None
+        Value of most recent acceleration value
+    auto_reconnect: bool
+        Whether .connect() should be called after disconnecting
+    run: bool
+        TBD
+    client: BleakClient | None
+        The bluetooth client that communicates with Mario
+    default_volume: int | None
+        The % volume that Mario will be set to after (re)connecting.
+    _accelerometer_hooks: list[(Mario, int, int, int) -> None]
+        List of callback functions for accelerometer updates.
+    _pants_event_hooks: list[(Mario, str) -> None]
+        List of callback functions for pants updates.
+    _tile_event_hooks: list[(Mario, str) -> None]
+        List of callback functions for camera/rgb updates.
+    _log_event_hooks: list[(Mario, str) -> None]
+        List of callback functions for log messages.
+    _all_hooks: tuple[list[callbacks]]
+        tuple that contains all of the previous lists of callback functions
+
+    Methods
+    -------
+    add_accelerometer_hooks: (Callable | list[Callable]) -> None
+        Adds the given function(s) as callback functions for accelerometer data
+    add_pants_hooks: (Callable | list[Callable]) -> None
+        Adds the given function(s) as callback functions for pants data
+    add_tile_hooks: (Callable | list[Callable]) -> None
+        Adds the given function(s) as callback functions for tile data
+    add_log_hooks: (Callable | list[Callable]) -> None
+        Adds the given function(s) as callback functions for log calls
+    remove_hooks: (list[Any] | Callable) -> None
+        Removes the given object(s) from all hook lists.
+    log: (str) -> None
+        logs the message to stdout if self.do_log is true. Also passes message
+        to all callback functions in self._log_hooks.
+    connect: () -> Coroutine
+        Searches for Lego Mario objects via bluetooth and tries to connect.
+        Needs to be awaited.
+    set_volume: (int) -> None
+        If mario is connected, sets volume to the % volume given. Also sets
+        self.default_volume to keep volume persistent with reconnects.
     """
     def __init__(self,
                 do_log: bool=True,
@@ -139,10 +188,9 @@ class Mario:
             print((f"\r{address}: {msg}").ljust(100), end=end)
 
     def add_log_hooks(
-        self,
-        funcs: Union[
-            Callable[["Mario", str], Any], 
-            Iterable[Callable[["Mario", str], Any]]]
+        self, funcs: Union[
+                     Callable[["Mario", str], Any], 
+                     Iterable[Callable[["Mario", str], Any]]]
         ) -> None:
         """Adds function(s) as event hooks for updated tile or color values.
 
