@@ -20,15 +20,15 @@ ACC_EVENT = pygame.event.custom_type()
 RGB_EVENT = pygame.event.custom_type()
 PANTS_EVENT = pygame.event.custom_type()
 
-def acceleration_callback(mario: Mario, x: int, y: int, z: int):
+def _acceleration_callback(mario: Mario, x: int, y: int, z: int):
     event = pygame.event.Event(ACC_EVENT, value=(x,y,z), sender=mario)
     pygame.event.post(event)
 
-def rgb_callback(mario: Mario, t: str):
+def _rgb_callback(mario: Mario, t: str):
     event = pygame.event.Event(RGB_EVENT, value=t, sender=mario)
     pygame.event.post(event)
 
-def pants_callback(mario: Mario, powerup: str):
+def _pants_callback(mario: Mario, powerup: str):
     event = pygame.event.Event(PANTS_EVENT, value=powerup, sender=mario)
     pygame.event.post(event)
 
@@ -64,16 +64,16 @@ class AsyncClock():
         return self._tick_busy_loop(framerate)
 
 class PygameMario(Mario):
+    """Connect to Lego Mario and enable it to post pygame events.
+        Lego Mario's events will contain a sender (event.sender), which is the
+        Lego Mario object, and a value (event.value), which will either be a
+        string (in case of pants or camera data) or a tuple of integers (in
+        case of acceleration data)."""
     def __init__(self, enable_acc_events: bool = True,
                  enable_rgb_events: bool = True,
                  enable_pants_events: bool = True,
                  volume = 0) -> None:
-        """Connect to Lego Mario and enable it to post pygame events.
-        Lego Mario's events will contain a sender (event.sender), which is the
-        Lego Mario object, and a value (event.value), which will either be a
-        string (in case of pants or camera data) or a tuple of integers (in
-        case of acceleration data).
-
+        """
         Args:
             enable_acc_events (bool, optional): Whether to send acceleration
                 events. event.value will be tuple(int, int, int).
@@ -88,53 +88,22 @@ class PygameMario(Mario):
                 Defaults to 0.
         """
         super().__init__(False, default_volume=volume)
-        ports_task = self.init_ports(enable_acc_events, enable_rgb_events,
+        ports_task = self._init_ports(enable_acc_events, enable_rgb_events,
                                      enable_pants_events)
         asyncio.get_event_loop().create_task(ports_task)
 
-    async def init_ports(self, acc_enabled: bool, rgb_enabled: bool,
+    async def _init_ports(self, acc_enabled: bool, rgb_enabled: bool,
                          pants_enabled: bool) -> None:
         await self.await_connection()
         if acc_enabled:
-            self.add_accelerometer_hooks(acceleration_callback)
+            self.add_accelerometer_hooks(_acceleration_callback)
         else:
             await self.port_setup(0, 0, False)
         if rgb_enabled:
-            self.add_tile_hooks(rgb_callback)
+            self.add_tile_hooks(_rgb_callback)
         else:
             await self.port_setup(1, 0, False)
         if pants_enabled:
-            self.add_pants_hooks(pants_callback)
+            self.add_pants_hooks(_pants_callback)
         else:
             await self.port_setup(2, 0, False)
-
-# if you write your own game file, you'll need to use the following import
-# from pyLegoMario import PygameMario, ACC_EVENT, RGB_EVENT, PANTS_EVENT, AsyncClock
-def main():
-    pygame.init()
-    window = pygame.display.set_mode((1500,800))
-    clock = AsyncClock()
-    mario = PygameMario(volume=30)
-    hspeed = vspeed = 0
-    player = pygame.draw.rect(window, (255,255,255), (600,300,100,100))
-    while True:
-        clock.tick(60)
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == ACC_EVENT:
-                hspeed, vspeed = event.value[::2]
-            elif event.type == RGB_EVENT:
-                if 'start' in event.value.lower():
-                    player.w += 5
-                    player.h += 5
-        window.fill((0,0,0))
-        player.right += hspeed
-        player.top += vspeed
-        
-        pygame.draw.rect(window, (255,255,255), player)
-        pygame.display.update()
-
-if __name__ == "__main__":
-    main()
