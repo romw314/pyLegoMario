@@ -1,11 +1,10 @@
 """
 pygame_mario.py
 This file implements class PygameMario that subclasses Mario to utilize pygame
-events. This file can also be executed as an example of how to write a pygame
-game loop with asyncio (which is needed to play with Mario).
-Copyright (c) 2022 Bruno Hautzenberger, Jamin Kauf
+events. It also implements AsyncClock, which behaves like a regular pygame
+clock but also keeps Mario running.
+Copyright (c) 2022 Jamin Kauf
 """
-import sys
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -72,7 +71,7 @@ class PygameMario(Mario):
     def __init__(self, enable_acc_events: bool = True,
                  enable_rgb_events: bool = True,
                  enable_pants_events: bool = True,
-                 volume = 0) -> None:
+                 **kwargs) -> None:
         """
         Args:
             enable_acc_events (bool, optional): Whether to send acceleration
@@ -84,10 +83,10 @@ class PygameMario(Mario):
                 Defaults to True.
             enable_pants_events (bool, optional): Whether to send pants events.
                 event.value will be str. Defaults to True.
-            volume (int, optional): % volume that the device will be set to.
-                Defaults to 0.
         """
-        super().__init__(False, default_volume=volume)
+        kwargs.setdefault('do_log', False)
+        kwargs.setdefault('default_volume', 0)
+        super().__init__(**kwargs)
         ports_task = self._init_ports(enable_acc_events, enable_rgb_events,
                                      enable_pants_events)
         asyncio.get_event_loop().create_task(ports_task)
