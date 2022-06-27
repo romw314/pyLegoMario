@@ -174,7 +174,7 @@ class Mario:
             asyncio.set_event_loop(asyncio.SelectorEventLoop())
             asyncio.get_event_loop().create_task(self.connect())
 
-    def log(self, msg, end="\n"):
+    def log(self, msg: str, end: str = "\n") -> None:
         """Log any message to stdout and call all assigned LogEvent handlers.
 
         Args:
@@ -207,7 +207,7 @@ class Mario:
     def add_tile_hooks(
         self,
         funcs: Union[
-            Callable[["Mario", str], Any], 
+            Callable[["Mario", str], Any],
             Iterable[Callable[["Mario", str], Any]]]
         ) -> None:
         """Adds function(s) as event hooks for updated tile or color values.
@@ -488,8 +488,7 @@ class Mario:
 
         Args:
             new_volume (int): Percentage of maximum volume. 
-                Values <0 or >100 will be set to 0 or 100 respectively.
-        """
+                Values <0 or >100 will be set to 0 or 100 respectively."""
         new_volume = min(max(new_volume, 0), 100)
         if self.client:
             try:
