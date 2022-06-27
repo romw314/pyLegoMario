@@ -167,6 +167,8 @@ if __name__ == "__main__":
     DIR_PATH = Path(sys.argv[0]).parent / "mario_soundboard_files"
     if not os.path.isdir(DIR_PATH):
         os.mkdir(DIR_PATH)
+        input(f'Put all the .wav files you wanna use into {DIR_PATH},'
+              ' then press enter or restart the script.')
     # Initialize Mario
     mario = Mario(True, default_volume=0)
     MarioWindow(mario)
