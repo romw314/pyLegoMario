@@ -98,7 +98,7 @@ def _accHandling(sender: MarioController, x: int, y: int, z: int) -> None:
 if __name__ == "__main__":
     # Initialize Marios
     print("Turn on Mario and press Bluetooth Button")
-    controller = MarioController(False, defaultVolume=0)
+    controller = MarioController(False)
     
     # MarioWindow(controller)
     run()
