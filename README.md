@@ -58,4 +58,4 @@ Tweet at me: [@Jackomatrus](https://www.twitter.com/Jackomatrus)
 
 On Windows you will need Python 3.9 or higher for Bluetooth sockets to work properly.
 
-I have not tested this on Mac or Linux.
+I tested this on Mac and Windows. I have not tested this on Linux.
