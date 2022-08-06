@@ -105,6 +105,10 @@ class MarioWindow(tk.Frame):
                                     from_=0, to=100, orient=tk.HORIZONTAL,
                                     command=self._set_mario_volume,
                                     label="Volume", highlightthickness=0)
+        if not self.mario.default_volume is None:
+            self.volumeScale.set(self.mario.default_volume)
+        else:
+            self.volumeScale.set(100)
         self.volumeFrame.grid(row=0, column=3)
         self.volumeScale.grid(row=0, column=0)
 
