@@ -309,24 +309,24 @@ class Mario:
         if data[2] == 0x45:
             # Camera Sensor Data
             if data[3] == 0x01:
-                if data[5] == data[6] == 0xff:
+                if data[4] == data[5] == data[6] == data[7] == 0xff:
                     self.log(f"IDLE?, Hex: {hex_data}")
-                    return
-                # RGB code
-                if data[5] == 0x00:
-                    tile = HEX_TO_RGB_TILE.get(
-                        data[4], 
-                        f"Unkown Tile Code: {hex(data[4])}")
-                    self.recent_tile = tile
-                    self.log(f"{tile} Tile, Hex: {hex_data}")
-                    self._call_tile_hooks(tile)
-                # Ground Colors
-                elif data[5] == 0xff:
+                elif data[4] == data[5] == 0xff:
+                    # Ground Colors
                     color = HEX_TO_COLOR_TILE.get(
                         data[6],
                         f"Unkown Color: {hex(data[6])}")
                     self.log(f"{color} Ground, Hex: {hex_data}")
                     self._call_tile_hooks(color)
+                else:
+                    # RGB code
+                    tile_code = int.from_bytes(data[4:], 'big')
+                    tile_name = HEX_TO_RGB_TILE.get(
+                        tile_code,
+                        f"Unkown Tile Code: {hex(tile_code)}")
+                    self.recent_tile = tile_name
+                    self.log(f"{tile_name} Tile, Hex: {hex_data}")
+                    self._call_tile_hooks(tile_name)
 
             # Accelerometer data
             elif data[3] == 0x00:
@@ -358,8 +358,8 @@ class Mario:
             # Port 3 data - uncertain about all of it
             elif data[3] == 0x03:
                 if data[4] == 0x13 and data[5] == 0x01:
-                    tile = HEX_TO_RGB_TILE.get(data[6], "Unkown Tile")
-                    self.log(f"Port 3: Jumped on {tile}, Hex: {hex_data}")
+                    tile_name = HEX_TO_RGB_TILE.get(data[6], "Unkown Tile")
+                    self.log(f"Port 3: Jumped on {tile_name}, Hex: {hex_data}")
                 else:
                     #TBD
                     self.log(
@@ -420,6 +420,8 @@ class Mario:
                     d.name.lower().startswith("lego luigi")
                     or
                     d.name.lower().startswith("lego mario")
+                    or
+                    d.name.lower().startswith("lego peach")
                     ):
                     try:
                         client = BleakClient(d.address)

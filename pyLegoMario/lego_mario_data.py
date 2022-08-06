@@ -33,6 +33,7 @@ HEX_TO_PANTS = {        # Pins
     0x11: "Cat",        #010001
     0x12: "Fire",       #010010
     0x14: "Penguin",    #010100
+    0x18: "Peach",      #011000
     0x21: "Mario",      #100001
     0x22: "Builder"     #100010
 }
