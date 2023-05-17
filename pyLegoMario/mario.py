@@ -96,19 +96,19 @@ class Mario:
                 accelerometer_hooks: Union[
                     Callable[["Mario", int, int, int], Any],
                     Iterable[Callable[["Mario", int, int, int], Any]]
-                    ]=None,
+                    ]=[],
                 tile_event_hooks: Union[
                     Callable[["Mario", str], Any],
                     Iterable[Callable[["Mario", str], Any]]
-                    ]=None,
+                    ]=[],
                 pants_event_hooks: Union[
                     Callable[["Mario", str], Any],
                     Iterable[Callable[["Mario", str], Any]]
-                    ]=None,
+                    ]=[],
                 log_event_hooks: Union[
                     Callable[["Mario", str], Any],
                     Iterable[Callable[["Mario", str], Any]]
-                    ]=None,
+                    ]=[],
                 default_volume: Union[int, None]=None
                 ) -> None:
         """
@@ -141,17 +141,17 @@ class Mario:
                 will not adjust volume. Defaults to None.
         """
 
-        self.do_log = do_log  # output logs to stdout only if True
+        self.do_log = do_log  # output logs to stdout if True
         self.run = False
         self.auto_reconnect = True  # handles reconnection on disconnect
-        self.client: Union[BleakClient, None] = None
+        self.client: BleakClient | None = None
         self.default_volume = default_volume  # if None, volume won't be changed
 
         # values to keep most recent event in memory
-        self.pants: str = None
-        self.ground: str = None
-        self.acceleration: tuple[int, int, int] = None
-        self.recent_tile: str = None
+        self.pants: str | None = None
+        self.ground: str | None = None
+        self.acceleration: tuple[int, int, int] | None = None
+        self.recent_tile: str | None = None
 
         self._accelerometer_hooks: list[
                                         Callable[
@@ -261,8 +261,8 @@ class Mario:
     def remove_hooks(
         self,
         funcs: Union[
-            Callable[[Any], Any],
-            Iterable[Callable[[Any], Any]]]
+            Callable[..., Any],
+            Iterable[Callable[..., Any]]]
         ) -> None:
         """Removes function(s) as event hooks.
             Note that this is without consideration for the type of hook.
@@ -341,9 +341,16 @@ class Mario:
 
                 # RAW Mode
                 else:
-                    x = int(signed(data[4]))
-                    y = int(signed(data[5]))
-                    z = int(signed(data[6]))
+                    try:
+                        x = int(signed(data[4]))
+                        y = int(signed(data[5]))
+                        z = int(signed(data[6]))
+                    except IndexError:
+                        error_msg = (f'Message length is {len(data)}, expected 6.'
+                            'The most likely cause is outdated software. To update, '
+                            'connect your Lego Mario to the Lego Mario smartphone app.')
+                        self.log(error_msg)
+                        raise ValueError(error_msg)
                     self.log(f"X: {x} Y: {y} Z: {z}", end="")
                     self._call_accelerometer_hooks(x, y, z)
 
@@ -567,6 +574,8 @@ class Mario:
             self.run = False
 
     async def turn_off(self) -> None:
+        if not self.client:
+            return
         try:
             self.log("Turning Off... ")
             await self.client.write_gatt_char(LEGO_CHARACTERISTIC_UUID,
@@ -589,6 +598,7 @@ class Mario:
 
     def __str__(self) -> str:
         if self.is_connected:
+            assert self.client
             return f"Mario at {self.client.address}"
         else:
             return "Mario - not connected"
