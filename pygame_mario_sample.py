@@ -194,7 +194,7 @@ class Player(pygame.sprite.Sprite):
                 self.move(step / 2, collision_sprites=collision_sprites)
                 self.move(step / 2, collision_sprites=collision_sprites)
                 return
-        else: #  moved without collisions!
+        else: #  moved without collisions
             self.precise_coords = new_pos
             return
 
@@ -272,6 +272,7 @@ class Game:
     def new_game(self) -> None:
         """Sets up new game by 'reviving' players, initializing new walls,
            and resetting the frame counter."""
+        self.game_timer = 0
         self.active_player_group = pygame.sprite.Group(self.players)
         [player.reset() for player in self.players]
         self.walls = Wall.SCREEN_WALLS()[:]
@@ -290,6 +291,7 @@ class Game:
         while True:
             self.wait_for_marios()
             self.frame_counter += 1
+            self.game_timer += self.clock.get_time()
             kwargs = {'collision_sprites': self.walls,
                       'frame': self.frame_counter,
                       'players': self.active_player_group}
@@ -330,6 +332,10 @@ class Game:
         if self.text:
             rect = self.text.get_rect(center=self.rect.center)
             self.surface.blit(self.text, rect)
+        # render timer
+        timer_text = FONT.render(str(self.game_timer // 1000), True, BLACK)
+        timer_rect = timer_text.get_rect(topright=(WIDTH, 0))
+        self.surface.blit(timer_text, timer_rect)
         pygame.display.update()
 
     def communicate(self, text: str, duration: float = None):
