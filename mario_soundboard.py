@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 import json, os, asyncio, random, sys
-from typing import Callable, Union
+from typing import Callable, Union, cast
 from pyLegoMario import Mario, MarioWindow, run
 from pathlib import Path
 import soundfile as sf
@@ -47,8 +47,9 @@ async def register_sounds(
     """
     settings = load_settings()
     saved_mappings = settings.get("sound_mappings", {})
+    saved_mappings = cast(dict[str, str], saved_mappings)
     
-    tile_mapping = {} # tile_name : sound_name
+    tile_mapping: dict[str, str] = {} # tile_name : sound_name
     for tile_name, sound_name in saved_mappings.items():
         # copy old settings
         if sound_name in sounds.keys():
@@ -108,7 +109,7 @@ def select_audio_device(mario: Mario) -> int:
             "Please choose one of the output devices by entering a number.")
     return pyip.inputInt(prompt, min=0, max=len(available_devices) - 1)
 
-def load_settings() -> dict[str, Union[int, str]]:
+def load_settings() -> dict[str, int | str | dict[str, str]]:
     try:
         with open(DIR_PATH / "settings.json", "r") as f:
             settings = json.load(f)
@@ -127,6 +128,8 @@ def save_settings(settings: dict) -> None:
 
 def get_sounds(folder_path: Union[str, Path]) -> dict[str, list[sf.SoundFile]]:
     sounds = {}
+    if isinstance(folder_path, str):
+        folder_path = Path(folder_path)
     for name in os.listdir(folder_path):
         if name.endswith(".wav"):
             sounds[name] = [sf.read(folder_path / name)]
@@ -174,7 +177,7 @@ if __name__ == "__main__":
     MarioWindow(mario)
     settings = load_settings()
     try:
-        device = settings["device"]
+        device = cast(int, settings["device"])
     except KeyError:
         device = select_audio_device(mario)
         settings["device"] = device
