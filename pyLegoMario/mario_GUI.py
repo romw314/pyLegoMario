@@ -27,6 +27,7 @@ class MarioWindow(tk.Frame):
             tk.Frame.__init__(self, master)
         else:
             tk.Frame.__init__(self, tk.Toplevel() if tk._default_root else None)
+        self.master: tk.Toplevel
         # Window Setup
         self.master.minsize(644, 165)
         self.master.iconbitmap(Path(__file__).parent / "icon.ico")
@@ -162,7 +163,7 @@ class MarioWindow(tk.Frame):
                                         self.port_mode_variable,
                                         *options)
         self.mode_menu.config(highlightthickness=0)
-        self.port_mode_variable.set("0")
+        self.port_mode_variable.set(0)
         self.mode_menu.grid(column=0, row=0)
 
         # Button for configuring port format
@@ -206,13 +207,13 @@ class MarioWindow(tk.Frame):
 
         # only reset selection if previously selected mode isn't valid anymore
         if not int(self.port_mode_variable.get()) in new_choices:
-            self.port_mode_variable.set("0")
+            self.port_mode_variable.set(0)
 
     def _set_port_input_format(self) -> None:
         task = self.mario.port_setup(
             port=self.portVar.get(),
             mode=self.port_mode_variable.get(),
-            notifications=self.notificationVar.get())
+            notifications=bool(self.notificationVar.get()))
         asyncio.create_task(task)
 
 
